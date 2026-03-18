@@ -49,38 +49,43 @@ export const LandingPage: React.FC = () => {
             .eq('id', examId)
             .single();
 
-          const isLimitEnabled = jenisData && (jenisData.limit_one_per_day || jenisData.timer_minutes < 0);
+          const isLimitEnabled = jenisData && (jenisData.limit_one_per_day === true || jenisData.timer_minutes < 0);
           if (isLimitEnabled) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            // Hitung awal hari WIB (UTC+7)
+            const now = new Date();
+            const offsetMs = 7 * 60 * 60 * 1000;
+            const wibNow = new Date(now.getTime() + offsetMs);
+            wibNow.setUTCHours(0, 0, 0, 0);
+            const todayStart = new Date(wibNow.getTime() - offsetMs).toISOString();
 
-            const { data: previousAttempts } = await supabase
+            const { data: previousAttempts, error: attemptsError } = await supabase
               .from('hasil_ujian')
               .select('id')
               .eq('nik', nik)
               .eq('jenis_ujian_id', examId)
-              .gte('waktu_selesai', today.toISOString());
+              .gte('waktu_selesai', todayStart);
+
+            if (attemptsError) console.error('Cek attempts error:', attemptsError.message);
 
             if (previousAttempts && previousAttempts.length > 0) {
-              const { data: approvedRemedial } = await supabase
+              const { data: approvedRemedial, error: remError } = await supabase
                 .from('remedial_requests')
                 .select('id')
                 .eq('nik', nik)
                 .eq('jenis_ujian_id', examId)
                 .eq('status', 'approved')
-                .gte('created_at', today.toISOString());
+                .gte('created_at', todayStart);
+
+              if (remError) console.error('Cek remedial error:', remError.message);
 
               const approvedCount = approvedRemedial?.length || 0;
-              
-              // If attempts >= 1 + approvedCount, block them
-              // 1 is the initial attempt
+
               if (previousAttempts.length >= 1 + approvedCount) {
                 setRemedialData({ nik: data.nik, nama: data.nama, perusahaan: data.perusahaan, examId });
                 setShowRemedialModal(true);
                 setLoading(false);
                 return;
               }
-              // If we are here, it means they have an approved remedial that hasn't been "used"
               data.is_remedial = true;
             }
           }
