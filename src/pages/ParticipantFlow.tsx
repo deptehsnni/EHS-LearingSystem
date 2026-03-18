@@ -229,24 +229,6 @@ export const ParticipantFlow: React.FC = () => {
 
   if (!participant) return null;
 
-  // Fungsi terpusat pencatat pelanggaran + trigger penalti
-  const recordViolation = (type: 'tab' | 'screenshot' | 'copy') => {
-    setViolationType(type);
-    if (type === 'tab') setTabViolations(v => v + 1);
-    else if (type === 'screenshot') setScreenshotViolations(v => v + 1);
-    else setCopyViolations(v => v + 1);
-
-    setTotalViolations(prev => {
-      const next = prev + 1;
-      // Penalti mulai di pelanggaran ke-4, 5, 6+
-      if (next === 4) { setPenaltyCountdown(120); setShowPenaltyModal(true); }
-      else if (next === 5) { setPenaltyCountdown(240); setShowPenaltyModal(true); }
-      else if (next >= 6) { setPenaltyCountdown(600); setShowPenaltyModal(true); }
-      else { setShowViolationWarning(true); }
-      return next;
-    });
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('ehs_participant');
     localStorage.removeItem('preferred_exam');
