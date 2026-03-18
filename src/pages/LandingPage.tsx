@@ -248,9 +248,12 @@ export const LandingPage: React.FC = () => {
           transition={{ duration: 0.6 }}
           className="lg:w-1/2 flex flex-col justify-between p-8 md:p-12 lg:p-16 lg:min-h-screen"
         >
-          <div className="flex items-center gap-3 mb-auto">
-            <img src="/logo.svg" alt="Logo" className="w-14 h-14 object-contain" referrerPolicy="no-referrer" />
-            <span className="text-[#E6A620] font-bold tracking-wide text-sm uppercase">EHS Learning System</span>
+          <div className="flex items-center gap-4 mb-auto">
+            <img src="/logo.svg" alt="Logo" className="w-16 h-16 object-contain" referrerPolicy="no-referrer" />
+            <div>
+              <p className="text-[#E6A620] font-black tracking-wide text-xl leading-tight">EHS Learning</p>
+              <p className="text-[#E6A620] font-black tracking-wide text-xl leading-tight">System</p>
+            </div>
           </div>
 
           <div className="py-12 lg:py-0">
@@ -313,9 +316,12 @@ export const LandingPage: React.FC = () => {
             className="w-full max-w-md"
           >
             {/* Logo hanya tampil di mobile */}
-            <div className="flex items-center gap-3 mb-6 lg:hidden">
-              <img src="/logo.svg" alt="Logo" className="w-14 h-14 object-contain" referrerPolicy="no-referrer" />
-              <span className="text-[#E6A620] font-bold tracking-wide text-sm uppercase">EHS Learning System</span>
+            <div className="flex items-center gap-4 mb-8 lg:hidden">
+              <img src="/logo.svg" alt="Logo" className="w-16 h-16 object-contain" referrerPolicy="no-referrer" />
+              <div>
+                <p className="text-[#E6A620] font-black tracking-wide text-xl leading-tight">EHS Learning</p>
+                <p className="text-[#E6A620] font-black tracking-wide text-xl leading-tight">System</p>
+              </div>
             </div>
 
             <div className="bg-[#161616] border border-white/10 rounded-3xl p-8 md:p-10 shadow-2xl">
