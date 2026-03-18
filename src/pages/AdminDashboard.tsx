@@ -29,7 +29,9 @@ import {
   Copy,
   QrCode,
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  Table2,
+  Save
 } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -251,6 +253,18 @@ export const AdminDashboard: React.FC = () => {
   const [showAddPesertaModal, setShowAddPesertaModal] = useState(false);
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  // Spreadsheet states
+  const [showSpreadsheetPeserta, setShowSpreadsheetPeserta] = useState(false);
+  const [showSpreadsheetSoal, setShowSpreadsheetSoal] = useState(false);
+  const [spreadsheetJenisId, setSpreadsheetJenisId] = useState('');
+  const [showSelectJenisModal, setShowSelectJenisModal] = useState(false);
+  const [selectJenisMode, setSelectJenisMode] = useState<'peserta' | 'soal'>('peserta');
+  // Spreadsheet rows
+  const emptyPesertaRow = () => ({ nik: '', nama: '', perusahaan: '', kategori: 'Karyawan' });
+  const emptySoalRow = () => ({ pertanyaan: '', pilihan_a: '', pilihan_b: '', pilihan_c: '', pilihan_d: '', jawaban_benar: 'A' });
+  const [spreadsheetPesertaRows, setSpreadsheetPesertaRows] = useState<any[]>(Array.from({length: 10}, emptyPesertaRow));
+  const [spreadsheetSoalRows, setSpreadsheetSoalRows] = useState<any[]>(Array.from({length: 10}, emptySoalRow));
+  const [savingSpreadsheet, setSavingSpreadsheet] = useState(false);
   const [newAdmin, setNewAdmin] = useState({
     username: '',
     password: '',
@@ -833,6 +847,57 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleSaveSpreadsheetPeserta = async () => {
+    const validRows = spreadsheetPesertaRows.filter(r => r.nik && r.nama && r.perusahaan);
+    if (validRows.length === 0) { alert('Tidak ada data valid. Pastikan NIK, Nama, dan Perusahaan terisi.'); return; }
+    setSavingSpreadsheet(true);
+    try {
+      const data = validRows.map(r => ({
+        nik: String(r.nik).trim(),
+        nama: String(r.nama).trim(),
+        perusahaan: String(r.perusahaan).trim(),
+        kategori: r.kategori || 'Karyawan',
+        allowed_jenis_id: spreadsheetJenisId || null
+      }));
+      const { error } = await supabase.from('peserta_master').upsert(data, { onConflict: 'nik' });
+      if (error) throw error;
+      alert(`${validRows.length} peserta berhasil disimpan!`);
+      setShowSpreadsheetPeserta(false);
+      setSpreadsheetPesertaRows(Array.from({length: 10}, emptyPesertaRow));
+      setSpreadsheetJenisId('');
+      fetchData();
+    } catch (err: any) {
+      alert('Gagal menyimpan: ' + (err.message || 'Terjadi kesalahan'));
+    } finally { setSavingSpreadsheet(false); }
+  };
+
+  const handleSaveSpreadsheetSoal = async () => {
+    const validRows = spreadsheetSoalRows.filter(r => r.pertanyaan && r.pilihan_a && r.pilihan_b && r.pilihan_c && r.pilihan_d && r.jawaban_benar);
+    if (validRows.length === 0) { alert('Tidak ada data valid. Pastikan semua kolom terisi.'); return; }
+    if (!spreadsheetJenisId) { alert('Pilih jenis ujian terlebih dahulu.'); return; }
+    setSavingSpreadsheet(true);
+    try {
+      const data = validRows.map(r => ({
+        jenis_ujian_id: spreadsheetJenisId,
+        pertanyaan: String(r.pertanyaan).trim(),
+        pilihan_a: String(r.pilihan_a).trim(),
+        pilihan_b: String(r.pilihan_b).trim(),
+        pilihan_c: String(r.pilihan_c).trim(),
+        pilihan_d: String(r.pilihan_d).trim(),
+        jawaban_benar: String(r.jawaban_benar).toUpperCase().trim()
+      }));
+      const { error } = await supabase.from('soal').insert(data);
+      if (error) throw error;
+      alert(`${validRows.length} soal berhasil disimpan!`);
+      setShowSpreadsheetSoal(false);
+      setSpreadsheetSoalRows(Array.from({length: 10}, emptySoalRow));
+      setSpreadsheetJenisId('');
+      fetchData();
+    } catch (err: any) {
+      alert('Gagal menyimpan: ' + (err.message || 'Terjadi kesalahan'));
+    } finally { setSavingSpreadsheet(false); }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('ehs_admin');
     navigate('/admin/login');
@@ -1222,6 +1287,12 @@ export const AdminDashboard: React.FC = () => {
                 >
                   <Plus size={18} /> Tambah Peserta
                 </button>
+                <button
+                  onClick={() => { setSelectJenisMode('peserta'); setShowSelectJenisModal(true); }}
+                  className="bg-[#006A6A] text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold shadow-md hover:bg-[#004D40]"
+                >
+                  <Table2 size={18} /> Input via Spreadsheet
+                </button>
               </div>
             )}
 
@@ -1247,6 +1318,12 @@ export const AdminDashboard: React.FC = () => {
                   className="bg-[#6750A4] text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold shadow-md hover:bg-[#4F378B]"
                 >
                   <Plus size={18} /> Tambah Soal
+                </button>
+                <button
+                  onClick={() => { setSelectJenisMode('soal'); setShowSelectJenisModal(true); }}
+                  className="bg-[#006A6A] text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold shadow-md hover:bg-[#004D40]"
+                >
+                  <Table2 size={18} /> Input via Spreadsheet
                 </button>
               </div>
             )}
@@ -3151,6 +3228,240 @@ export const AdminDashboard: React.FC = () => {
               >
                 {loading ? 'Mereset...' : 'Reset Sekarang'}
               </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Modal Pilih Jenis Ujian untuk Spreadsheet */}
+      {showSelectJenisModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+          <motion.div initial={{opacity:0,scale:0.95}} animate={{opacity:1,scale:1}}
+            className="bg-white rounded-[28px] w-full max-w-md p-8 shadow-2xl border border-[#E6E1E5]">
+            <h3 className="text-xl font-bold mb-2">Pilih Jenis {selectJenisMode === 'peserta' ? 'Pelatihan' : 'Ujian'}</h3>
+            <p className="text-sm text-[#49454F] mb-6">
+              {selectJenisMode === 'peserta'
+                ? 'Peserta akan didaftarkan ke jenis pelatihan yang dipilih.'
+                : 'Soal akan dimasukkan ke jenis ujian yang dipilih.'}
+            </p>
+            <div className="space-y-3 mb-6 max-h-72 overflow-y-auto">
+              {jenisUjian.map(j => (
+                <button key={j.id}
+                  onClick={() => {
+                    setSpreadsheetJenisId(j.id);
+                    setShowSelectJenisModal(false);
+                    if (selectJenisMode === 'peserta') {
+                      setSpreadsheetPesertaRows(Array.from({length:10}, emptyPesertaRow));
+                      setShowSpreadsheetPeserta(true);
+                    } else {
+                      setSpreadsheetSoalRows(Array.from({length:10}, emptySoalRow));
+                      setShowSpreadsheetSoal(true);
+                    }
+                  }}
+                  className="w-full p-4 rounded-2xl border-2 border-[#E6E1E5] hover:border-[#6750A4] hover:bg-[#F3F0F5] text-left transition-all flex items-center gap-3 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#EADDFF] text-[#6750A4] flex items-center justify-center group-hover:bg-[#6750A4] group-hover:text-white transition-all flex-shrink-0">
+                    <BookOpen size={18} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-[#1C1B1F]">{j.nama}</p>
+                    <p className="text-xs text-[#49454F]">{Math.abs(j.timer_minutes)} menit · {j.is_active ? '🟢 Aktif' : '🔴 Nonaktif'}</p>
+                  </div>
+                  <ChevronRight size={18} className="text-[#CAC4D0] group-hover:text-[#6750A4]" />
+                </button>
+              ))}
+              {jenisUjian.length === 0 && (
+                <p className="text-center text-[#49454F] py-4 text-sm">Belum ada jenis ujian. Buat jenis ujian terlebih dahulu.</p>
+              )}
+            </div>
+            <button onClick={() => setShowSelectJenisModal(false)}
+              className="w-full py-3 rounded-2xl border border-[#E6E1E5] font-bold text-[#49454F] hover:bg-[#F3F0F5]">
+              Batal
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Spreadsheet Modal Peserta */}
+      {showSpreadsheetPeserta && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-2 md:p-4">
+          <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
+            className="bg-white rounded-[24px] w-full max-w-6xl shadow-2xl border border-[#E6E1E5] flex flex-col" style={{maxHeight:'95vh'}}>
+            <div className="p-5 border-b border-[#E6E1E5] flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="text-lg font-bold flex items-center gap-2"><Table2 size={20} className="text-[#006A6A]" /> Input Peserta via Spreadsheet</h3>
+                <p className="text-xs text-[#49454F] mt-0.5">
+                  Jenis: <span className="font-bold text-[#6750A4]">{jenisUjian.find(j=>j.id===spreadsheetJenisId)?.nama}</span>
+                  {' · Baris kosong diabaikan · '}
+                  <span className="text-[#006A6A] font-medium">Paste dari Excel langsung ke kolom NIK</span>
+                </p>
+              </div>
+              <button onClick={() => setShowSpreadsheetPeserta(false)} className="p-2 hover:bg-[#F3F0F5] rounded-full flex-shrink-0"><X size={20}/></button>
+            </div>
+            <div className="overflow-auto flex-1 p-4">
+              <table className="border-collapse text-sm" style={{minWidth:'700px', width:'100%'}}>
+                <thead>
+                  <tr className="bg-[#6750A4] text-white">
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B] w-10">#</th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B]" style={{minWidth:'150px'}}>NIK / No. ID *</th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B]" style={{minWidth:'180px'}}>Nama Lengkap *</th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B]" style={{minWidth:'160px'}}>Perusahaan *</th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B]" style={{minWidth:'120px'}}>Kategori</th>
+                    <th className="px-2 py-2.5 border border-[#4F378B] w-10"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {spreadsheetPesertaRows.map((row, ri) => (
+                    <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}>
+                      <td className="px-3 py-1 border border-[#E6E1E5] text-[#9CA3AF] text-center text-xs">{ri+1}</td>
+                      <td className="border border-[#E6E1E5] p-0">
+                        <input value={row.nik} placeholder="Paste Excel di sini"
+                          onChange={e => { const nr=[...spreadsheetPesertaRows]; nr[ri]={...nr[ri],nik:e.target.value}; setSpreadsheetPesertaRows(nr); }}
+                          onPaste={e => {
+                            e.preventDefault();
+                            const text = e.clipboardData.getData('text');
+                            const lines = text.split('\n').filter(l => l.trim());
+                            const newRows = [...spreadsheetPesertaRows];
+                            lines.forEach((line, li) => {
+                              const cells = line.split('\t');
+                              const idx = ri + li;
+                              const rowData = { nik:cells[0]?.trim()||'', nama:cells[1]?.trim()||'', perusahaan:cells[2]?.trim()||'', kategori:cells[3]?.trim()||'Karyawan' };
+                              if (idx < newRows.length) newRows[idx] = rowData;
+                              else newRows.push(rowData);
+                            });
+                            setSpreadsheetPesertaRows(newRows);
+                          }}
+                          className="w-full px-2 py-1.5 outline-none focus:bg-[#EDE7FF] text-xs"
+                        />
+                      </td>
+                      {(['nama','perusahaan'] as const).map(col => (
+                        <td key={col} className="border border-[#E6E1E5] p-0">
+                          <input value={row[col]}
+                            onChange={e => { const nr=[...spreadsheetPesertaRows]; nr[ri]={...nr[ri],[col]:e.target.value}; setSpreadsheetPesertaRows(nr); }}
+                            className="w-full px-2 py-1.5 outline-none focus:bg-[#EDE7FF] text-xs" />
+                        </td>
+                      ))}
+                      <td className="border border-[#E6E1E5] p-0">
+                        <select value={row.kategori}
+                          onChange={e => { const nr=[...spreadsheetPesertaRows]; nr[ri]={...nr[ri],kategori:e.target.value}; setSpreadsheetPesertaRows(nr); }}
+                          className="w-full px-2 py-1.5 outline-none text-xs bg-transparent">
+                          {['Karyawan','Magang','Visitor','Kontraktor'].map(k=><option key={k}>{k}</option>)}
+                        </select>
+                      </td>
+                      <td className="border border-[#E6E1E5] text-center">
+                        <button onClick={() => setSpreadsheetPesertaRows(rows=>rows.filter((_,i)=>i!==ri))} className="p-1 text-[#CAC4D0] hover:text-[#B3261E]"><X size={14}/></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="p-4 border-t border-[#E6E1E5] flex items-center justify-between gap-3 flex-shrink-0">
+              <button onClick={() => setSpreadsheetPesertaRows(r => [...r, ...Array.from({length:5},emptyPesertaRow)])}
+                className="px-4 py-2 rounded-xl border border-[#E6E1E5] text-sm font-medium hover:bg-[#F3F0F5] flex items-center gap-2">
+                <Plus size={16}/> Tambah 5 Baris
+              </button>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-[#49454F]">{spreadsheetPesertaRows.filter(r=>r.nik&&r.nama&&r.perusahaan).length} baris valid</span>
+                <button onClick={() => setShowSpreadsheetPeserta(false)} className="px-5 py-2.5 rounded-xl border border-[#E6E1E5] font-bold text-[#49454F] hover:bg-[#F3F0F5]">Batal</button>
+                <button onClick={handleSaveSpreadsheetPeserta} disabled={savingSpreadsheet}
+                  className="px-6 py-2.5 rounded-xl bg-[#6750A4] text-white font-bold shadow-md hover:bg-[#4F378B] disabled:opacity-50 flex items-center gap-2">
+                  <Save size={16}/>{savingSpreadsheet ? 'Menyimpan...' : 'Simpan Semua'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Spreadsheet Modal Soal */}
+      {showSpreadsheetSoal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-2 md:p-4">
+          <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
+            className="bg-white rounded-[24px] w-full max-w-7xl shadow-2xl border border-[#E6E1E5] flex flex-col" style={{maxHeight:'95vh'}}>
+            <div className="p-5 border-b border-[#E6E1E5] flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="text-lg font-bold flex items-center gap-2"><Table2 size={20} className="text-[#006A6A]" /> Input Soal via Spreadsheet</h3>
+                <p className="text-xs text-[#49454F] mt-0.5">
+                  Jenis: <span className="font-bold text-[#6750A4]">{jenisUjian.find(j=>j.id===spreadsheetJenisId)?.nama}</span>
+                  {' · Baris kosong diabaikan · '}
+                  <span className="text-[#006A6A] font-medium">Paste dari Excel langsung ke kolom Pertanyaan</span>
+                </p>
+              </div>
+              <button onClick={() => setShowSpreadsheetSoal(false)} className="p-2 hover:bg-[#F3F0F5] rounded-full flex-shrink-0"><X size={20}/></button>
+            </div>
+            <div className="overflow-auto flex-1 p-4">
+              <table className="border-collapse text-sm" style={{minWidth:'1000px', width:'100%'}}>
+                <thead>
+                  <tr className="bg-[#006A6A] text-white">
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#004D40] w-10">#</th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#004D40]" style={{minWidth:'280px'}}>Pertanyaan *</th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#004D40]" style={{minWidth:'140px'}}>Pilihan A *</th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#004D40]" style={{minWidth:'140px'}}>Pilihan B *</th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#004D40]" style={{minWidth:'140px'}}>Pilihan C *</th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#004D40]" style={{minWidth:'140px'}}>Pilihan D *</th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#004D40] w-20">Jawaban *</th>
+                    <th className="px-2 py-2.5 border border-[#004D40] w-10"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {spreadsheetSoalRows.map((row, ri) => (
+                    <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-[#F0FAFA]'}>
+                      <td className="px-3 py-1 border border-[#E6E1E5] text-[#9CA3AF] text-center text-xs">{ri+1}</td>
+                      <td className="border border-[#E6E1E5] p-0">
+                        <input value={row.pertanyaan} placeholder="Paste Excel di sini"
+                          onChange={e => { const nr=[...spreadsheetSoalRows]; nr[ri]={...nr[ri],pertanyaan:e.target.value}; setSpreadsheetSoalRows(nr); }}
+                          onPaste={e => {
+                            e.preventDefault();
+                            const text = e.clipboardData.getData('text');
+                            const lines = text.split('\n').filter(l => l.trim());
+                            const newRows = [...spreadsheetSoalRows];
+                            lines.forEach((line, li) => {
+                              const cells = line.split('\t');
+                              const idx = ri + li;
+                              const rowData = { pertanyaan:cells[0]?.trim()||'', pilihan_a:cells[1]?.trim()||'', pilihan_b:cells[2]?.trim()||'', pilihan_c:cells[3]?.trim()||'', pilihan_d:cells[4]?.trim()||'', jawaban_benar:(cells[5]?.trim().toUpperCase()||'A') };
+                              if (idx < newRows.length) newRows[idx] = rowData;
+                              else newRows.push(rowData);
+                            });
+                            setSpreadsheetSoalRows(newRows);
+                          }}
+                          className="w-full px-2 py-1.5 outline-none focus:bg-[#E0F2F1] text-xs" />
+                      </td>
+                      {(['pilihan_a','pilihan_b','pilihan_c','pilihan_d'] as const).map(col => (
+                        <td key={col} className="border border-[#E6E1E5] p-0">
+                          <input value={row[col]}
+                            onChange={e => { const nr=[...spreadsheetSoalRows]; nr[ri]={...nr[ri],[col]:e.target.value}; setSpreadsheetSoalRows(nr); }}
+                            className="w-full px-2 py-1.5 outline-none focus:bg-[#E0F2F1] text-xs" />
+                        </td>
+                      ))}
+                      <td className="border border-[#E6E1E5] p-0">
+                        <select value={row.jawaban_benar}
+                          onChange={e => { const nr=[...spreadsheetSoalRows]; nr[ri]={...nr[ri],jawaban_benar:e.target.value}; setSpreadsheetSoalRows(nr); }}
+                          className="w-full px-2 py-1.5 outline-none text-xs bg-transparent font-bold text-[#006A6A]">
+                          {['A','B','C','D'].map(v=><option key={v}>{v}</option>)}
+                        </select>
+                      </td>
+                      <td className="border border-[#E6E1E5] text-center">
+                        <button onClick={() => setSpreadsheetSoalRows(rows=>rows.filter((_,i)=>i!==ri))} className="p-1 text-[#CAC4D0] hover:text-[#B3261E]"><X size={14}/></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="p-4 border-t border-[#E6E1E5] flex items-center justify-between gap-3 flex-shrink-0">
+              <button onClick={() => setSpreadsheetSoalRows(r => [...r, ...Array.from({length:5},emptySoalRow)])}
+                className="px-4 py-2 rounded-xl border border-[#E6E1E5] text-sm font-medium hover:bg-[#F3F0F5] flex items-center gap-2">
+                <Plus size={16}/> Tambah 5 Baris
+              </button>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-[#49454F]">{spreadsheetSoalRows.filter(r=>r.pertanyaan&&r.pilihan_a&&r.pilihan_b&&r.pilihan_c&&r.pilihan_d).length} baris valid</span>
+                <button onClick={() => setShowSpreadsheetSoal(false)} className="px-5 py-2.5 rounded-xl border border-[#E6E1E5] font-bold text-[#49454F] hover:bg-[#F3F0F5]">Batal</button>
+                <button onClick={handleSaveSpreadsheetSoal} disabled={savingSpreadsheet}
+                  className="px-6 py-2.5 rounded-xl bg-[#006A6A] text-white font-bold shadow-md hover:bg-[#004D40] disabled:opacity-50 flex items-center gap-2">
+                  <Save size={16}/>{savingSpreadsheet ? 'Menyimpan...' : 'Simpan Semua'}
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
