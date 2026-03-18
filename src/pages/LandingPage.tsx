@@ -249,7 +249,7 @@ export const LandingPage: React.FC = () => {
           className="lg:w-1/2 flex flex-col justify-between p-8 md:p-12 lg:p-16 lg:min-h-screen"
         >
           <div className="flex items-center gap-3 mb-auto">
-            <img src="/logo.svg" alt="Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
+            <img src="/logo.svg" alt="Logo" className="w-14 h-14 object-contain" referrerPolicy="no-referrer" />
             <span className="text-[#E6A620] font-bold tracking-wide text-sm uppercase">EHS Learning System</span>
           </div>
 
@@ -314,7 +314,7 @@ export const LandingPage: React.FC = () => {
           >
             {/* Logo hanya tampil di mobile */}
             <div className="flex items-center gap-3 mb-6 lg:hidden">
-              <img src="/logo.svg" alt="Logo" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
+              <img src="/logo.svg" alt="Logo" className="w-14 h-14 object-contain" referrerPolicy="no-referrer" />
               <span className="text-[#E6A620] font-bold tracking-wide text-sm uppercase">EHS Learning System</span>
             </div>
 
