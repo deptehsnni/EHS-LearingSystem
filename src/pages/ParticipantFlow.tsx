@@ -373,28 +373,30 @@ export const ParticipantFlow: React.FC = () => {
 
   return (
     <Layout title="Induksi Keselamatan Kerja">
-      {/* CSS untuk blackout saat print/screenshot */}
+      {/* CSS anti-screenshot multi-layer */}
       {examStarted && !examResult && (
         <style>{`
           @media print {
-            body * { visibility: hidden !important; }
-            body::after {
-              content: 'KONTEN INI TIDAK DAPAT DIAMBIL GAMBARNYA';
-              visibility: visible !important;
-              position: fixed;
-              inset: 0;
-              background: black;
-              color: white;
-              font-size: 24px;
-              font-weight: bold;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              z-index: 99999;
+            body > * { display: none !important; }
+            body::before {
+              content: '' !important;
+              display: block !important;
+              position: fixed !important;
+              inset: 0 !important;
+              background: #000 !important;
+              z-index: 999999 !important;
             }
           }
-          @media screen and (display-mode: standalone) {
-            .exam-content { -webkit-user-select: none; user-select: none; }
+          .exam-protected {
+            -webkit-user-select: none !important;
+            user-select: none !important;
+          }
+          @keyframes secureFlicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.99; }
+          }
+          .exam-protected * {
+            animation: secureFlicker 0.1s infinite;
           }
         `}</style>
       )}
@@ -662,13 +664,30 @@ export const ParticipantFlow: React.FC = () => {
               animate={{ opacity: 1 }}
               className="space-y-6"
             >
-              {/* Anti-Cheat Watermark */}
-              <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden opacity-[0.07] select-none flex flex-wrap gap-20 p-10 justify-center items-center content-center">
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <div key={i} className="rotate-[-35deg] text-2xl font-bold whitespace-nowrap text-[#6750A4]">
-                    {participant.nama} - {participant.nik} - {participant.perusahaan}
-                  </div>
-                ))}
+              {/* Anti-Cheat Watermark - Multi Layer */}
+              {/* Layer 1: diagonal teks rapat */}
+              <div className="fixed inset-0 pointer-events-none z-[49] overflow-hidden select-none"
+                style={{ opacity: 0.12 }}>
+                <div className="absolute inset-0 flex flex-col gap-8 pt-4" style={{ transform: 'rotate(-35deg) scale(1.5)', transformOrigin: 'center' }}>
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <div key={i} className="flex gap-8 whitespace-nowrap">
+                      {Array.from({ length: 6 }).map((_, j) => (
+                        <span key={j} className="text-sm font-bold text-[#6750A4] shrink-0">
+                          {participant.nama} · {participant.nik}
+                        </span>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Layer 2: center watermark besar */}
+              <div className="fixed inset-0 pointer-events-none z-[48] overflow-hidden select-none flex items-center justify-center"
+                style={{ opacity: 0.06 }}>
+                <div className="text-center" style={{ transform: 'rotate(-35deg)' }}>
+                  <p className="text-5xl sm:text-8xl font-black text-[#6750A4] leading-tight">{participant.nama}</p>
+                  <p className="text-3xl sm:text-5xl font-black text-[#6750A4]">{participant.nik}</p>
+                  <p className="text-xl sm:text-3xl font-bold text-[#6750A4]">{participant.perusahaan}</p>
+                </div>
               </div>
 
               {/* Timer & Progress */}
@@ -697,7 +716,13 @@ export const ParticipantFlow: React.FC = () => {
               {/* Questions List */}
               <div className="space-y-4 sm:space-y-8" onCopy={e => e.preventDefault()} onCut={e => e.preventDefault()}>
                 {questions.map((q, index) => (
-                  <div key={q.id} className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-md border border-[#E6E1E5] select-none">
+                  <div key={q.id} className="relative bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-md border border-[#E6E1E5] select-none overflow-hidden">
+                    {/* Watermark per kartu soal */}
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center" style={{opacity: 0.045}}>
+                      <p className="text-xl sm:text-3xl font-black text-[#6750A4] whitespace-nowrap" style={{transform: 'rotate(-35deg)'}}>
+                        {participant.nama} · {participant.nik}
+                      </p>
+                    </div>
                     <div className="flex items-start gap-3 mb-4 sm:mb-6">
                       <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-[#6750A4] text-white flex items-center justify-center font-bold flex-shrink-0 text-xs sm:text-base">
                         {index + 1}
