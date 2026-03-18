@@ -469,7 +469,7 @@ export const ParticipantFlow: React.FC = () => {
                   <span className="font-bold text-lg">{participant.nama}</span>
                 </div>
                 <div className="flex justify-between border-b border-[#E6E1E5] pb-3">
-                  <span className="text-[#49454F]">NIK</span>
+                  <span className="text-[#49454F]">NIK KTP / No. ID Karyawan</span>
                   <span className="font-mono font-bold text-lg">{participant.nik}</span>
                 </div>
                 <div className="flex justify-between">
