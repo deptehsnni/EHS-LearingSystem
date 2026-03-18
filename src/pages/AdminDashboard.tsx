@@ -53,6 +53,86 @@ import {
   Cell 
 } from 'recharts';
 
+const LandingConfigEditor: React.FC = () => {
+  const [judul, setJudul] = useState('');
+  const [deskripsi, setDeskripsi] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    supabase.from('landing_config').select('*').eq('id', 'main').single()
+      .then(({ data }) => {
+        if (data) { setJudul(data.judul || ''); setDeskripsi(data.deskripsi || ''); }
+        else { setJudul('Induksi & Keselamatan Kerja'); setDeskripsi('Platform ujian induksi keselamatan kerja profesional. Pastikan setiap pekerja memahami standar K3 sebelum memasuki area kerja.'); }
+      });
+  }, []);
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      await supabase.from('landing_config').upsert([{ id: 'main', judul, deskripsi }], { onConflict: 'id' });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  };
+
+  return (
+    <div className="bg-white rounded-[32px] border border-[#E6E1E5] shadow-sm p-8">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-xl font-bold">Tampilan Landing Page</h3>
+          <p className="text-sm text-[#49454F] mt-1">Edit judul & deskripsi yang tampil di halaman utama peserta</p>
+        </div>
+        {saved && <span className="text-xs font-bold text-[#2E7D32] bg-[#E8F5E9] px-3 py-1.5 rounded-full">✓ Tersimpan</span>}
+      </div>
+      <div className="space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-[#49454F] mb-2">
+            Judul Halaman <span className="text-[#9CA3AF] text-xs">(gunakan & untuk bagian yang diwarnai kuning)</span>
+          </label>
+          <input
+            type="text"
+            value={judul}
+            onChange={e => setJudul(e.target.value)}
+            placeholder="Contoh: Induksi & Keselamatan Kerja"
+            className="w-full p-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#6750A4] text-sm"
+          />
+          {judul && (
+            <div className="mt-2 p-3 bg-[#0F0F0F] rounded-xl">
+              <p className="text-xs text-[#6B7280] mb-1 uppercase tracking-wider">Preview:</p>
+              <p className="text-white font-black text-lg leading-tight">
+                {judul.includes('&') ? (
+                  <>{judul.split('&')[0].trim()} & <span className="text-[#E6A620]">{judul.split('&')[1]?.trim()}</span></>
+                ) : (
+                  <span className="text-[#E6A620]">{judul}</span>
+                )}
+              </p>
+            </div>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-[#49454F] mb-2">Deskripsi</label>
+          <textarea
+            value={deskripsi}
+            onChange={e => setDeskripsi(e.target.value)}
+            rows={3}
+            placeholder="Deskripsi singkat sistem..."
+            className="w-full p-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#6750A4] text-sm resize-none"
+          />
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={loading || !judul || !deskripsi}
+          className="w-full py-3 bg-[#6750A4] text-white rounded-xl font-bold hover:bg-[#4F378B] transition-all disabled:opacity-50"
+        >
+          {loading ? 'Menyimpan...' : 'Simpan Perubahan'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'peserta' | 'soal' | 'hasil' | 'settings' | 'jenis_ujian' | 'requests'>('overview');
   const [admin, setAdmin] = useState<AdminUser | null>(null);
@@ -2070,6 +2150,8 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            <LandingConfigEditor />
           </div>
         )}
       </main>
