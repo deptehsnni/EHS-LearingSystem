@@ -265,10 +265,10 @@ export const AdminDashboard: React.FC = () => {
   const [spreadsheetPesertaRows, setSpreadsheetPesertaRows] = useState<any[]>(Array.from({length: 10}, emptyPesertaRow));
   const [spreadsheetSoalRows, setSpreadsheetSoalRows] = useState<any[]>(Array.from({length: 10}, emptySoalRow));
   const [savingSpreadsheet, setSavingSpreadsheet] = useState(false);
-  const [selectedCells, setSelectedCells] = useState<{row:number,col:string}|null>(null);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [bulkKategori, setBulkKategori] = useState('');
-  const [showBulkKategori, setShowBulkKategori] = useState(false);
+  const [anchorRow, setAnchorRow] = useState<number|null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [newAdmin, setNewAdmin] = useState({
     username: '',
     password: '',
@@ -3251,7 +3251,8 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Spreadsheet Modal Peserta */}
       {showSpreadsheetPeserta && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-2 md:p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-2 md:p-4"
+          onMouseUp={() => setIsDragging(false)}>
           <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
             className="bg-white rounded-[24px] w-full max-w-6xl shadow-2xl border border-[#E6E1E5] flex flex-col" style={{maxHeight:'95vh'}}>
 
@@ -3261,88 +3262,117 @@ export const AdminDashboard: React.FC = () => {
                 <h3 className="text-lg font-bold flex items-center gap-2"><Table2 size={20} className="text-[#006A6A]" /> Input Peserta via Spreadsheet</h3>
                 <p className="text-xs text-[#49454F] mt-0.5">
                   Jenis: <span className="font-bold text-[#6750A4]">{jenisUjian.find(j=>j.id===spreadsheetJenisId)?.nama}</span>
-                  {' · Klik sel mana saja lalu Ctrl+V untuk paste dari Excel · '}
-                  <span className="text-[#006A6A] font-medium">Centang baris untuk ubah kategori massal</span>
+                  {' · Klik sel lalu Ctrl+V untuk paste · '}
+                  <span className="text-[#006A6A] font-medium">Klik nomor baris untuk pilih · Shift+klik untuk range · Drag untuk block</span>
                 </p>
               </div>
-              <button onClick={() => { setShowSpreadsheetPeserta(false); setSelectedRows(new Set()); }} className="p-2 hover:bg-[#F3F0F5] rounded-full flex-shrink-0"><X size={20}/></button>
+              <button onClick={() => { setShowSpreadsheetPeserta(false); setSelectedRows(new Set()); setAnchorRow(null); }} className="p-2 hover:bg-[#F3F0F5] rounded-full flex-shrink-0"><X size={20}/></button>
             </div>
 
-            {/* Bulk Kategori Bar - muncul saat ada baris dipilih */}
+            {/* Action Bar - muncul saat ada baris dipilih */}
             {selectedRows.size > 0 && (
-              <div className="px-5 py-3 bg-[#EDE7FF] border-b border-[#6750A4]/20 flex items-center gap-3 flex-shrink-0">
-                <span className="text-xs font-bold text-[#6750A4]">{selectedRows.size} baris dipilih</span>
-                <span className="text-xs text-[#49454F]">— Ubah kategori semua baris yang dipilih:</span>
-                <select
-                  value={bulkKategori}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (!val) return;
-                    setBulkKategori(val);
-                    setSpreadsheetPesertaRows(rows => rows.map((r, i) =>
-                      selectedRows.has(i) ? {...r, kategori: val} : r
-                    ));
-                  }}
-                  className="px-3 py-1 rounded-lg border border-[#6750A4] text-xs font-bold text-[#6750A4] bg-white focus:outline-none"
-                >
-                  <option value="">-- Pilih Kategori --</option>
-                  {['Karyawan','Magang','Visitor','Kontraktor'].map(k=><option key={k} value={k}>{k}</option>)}
-                </select>
-                <button onClick={() => { setSelectedRows(new Set()); setBulkKategori(''); }}
-                  className="ml-auto text-xs text-[#49454F] hover:text-[#B3261E] px-3 py-1 rounded-lg hover:bg-white transition-all">
-                  Batal Pilih
-                </button>
+              <div className="px-5 py-3 bg-[#EDE7FF] border-b border-[#6750A4]/20 flex items-center gap-3 flex-wrap flex-shrink-0">
+                <span className="text-xs font-bold text-[#6750A4] bg-[#6750A4]/10 px-2.5 py-1 rounded-full">
+                  {selectedRows.size} baris dipilih
+                </span>
+                <span className="text-xs text-[#49454F]">Ubah kategori sekaligus:</span>
+                <div className="flex gap-2">
+                  {['Karyawan','Magang','Visitor','Kontraktor'].map(k => (
+                    <button key={k}
+                      onClick={() => {
+                        setBulkKategori(k);
+                        setSpreadsheetPesertaRows(rows => rows.map((r,i) => selectedRows.has(i) ? {...r, kategori:k} : r));
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${bulkKategori === k ? 'bg-[#6750A4] text-white border-[#6750A4]' : 'bg-white text-[#6750A4] border-[#6750A4]/40 hover:border-[#6750A4]'}`}>
+                      {k}
+                    </button>
+                  ))}
+                </div>
+                <div className="ml-auto flex gap-2">
+                  <button
+                    onClick={() => { setSpreadsheetPesertaRows(rows => rows.filter((_,i) => !selectedRows.has(i))); setSelectedRows(new Set()); setAnchorRow(null); }}
+                    className="px-3 py-1 rounded-lg text-xs font-bold text-[#B3261E] bg-white border border-[#B3261E]/30 hover:bg-[#F9DEDC] flex items-center gap-1">
+                    <Trash2 size={12}/> Hapus {selectedRows.size} Baris
+                  </button>
+                  <button onClick={() => { setSelectedRows(new Set()); setAnchorRow(null); setBulkKategori(''); }}
+                    className="px-3 py-1 rounded-lg text-xs text-[#49454F] hover:bg-white border border-transparent hover:border-[#E6E1E5]">
+                    ✕ Batal
+                  </button>
+                </div>
               </div>
             )}
 
             {/* Grid */}
-            <div className="overflow-auto flex-1 p-4">
-              <table className="border-collapse text-sm" style={{minWidth:'700px', width:'100%'}}>
+            <div className="overflow-auto flex-1 p-4" onMouseLeave={() => setIsDragging(false)}>
+              <table className="border-collapse text-sm select-none" style={{minWidth:'700px', width:'100%'}}>
                 <thead>
                   <tr className="bg-[#6750A4] text-white">
-                    <th className="px-2 py-2.5 border border-[#4F378B] w-8">
-                      <input type="checkbox"
-                        checked={selectedRows.size === spreadsheetPesertaRows.length && spreadsheetPesertaRows.length > 0}
-                        onChange={e => {
-                          if (e.target.checked) setSelectedRows(new Set(spreadsheetPesertaRows.map((_,i)=>i)));
-                          else setSelectedRows(new Set());
-                        }}
-                        className="rounded border-white/50 text-[#6750A4]"
-                      />
+                    {/* Header checkbox - select all */}
+                    <th className="px-2 py-2.5 border border-[#4F378B] w-10 text-center cursor-pointer hover:bg-[#4F378B]"
+                      onClick={() => {
+                        if (selectedRows.size === spreadsheetPesertaRows.length) {
+                          setSelectedRows(new Set()); setAnchorRow(null);
+                        } else {
+                          setSelectedRows(new Set(spreadsheetPesertaRows.map((_,i)=>i)));
+                          setAnchorRow(0);
+                        }
+                      }}
+                      title="Klik untuk pilih/batal semua">
+                      <span className="text-[10px]">{selectedRows.size === spreadsheetPesertaRows.length && spreadsheetPesertaRows.length > 0 ? '☑' : '☐'}</span>
                     </th>
-                    <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B] w-8">#</th>
-                    <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B] cursor-pointer hover:bg-[#4F378B]" style={{minWidth:'150px'}}
-                      title="Klik sel di kolom ini lalu Ctrl+V untuk paste dari Excel">
-                      NIK / No. ID *
-                    </th>
+                    <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B]" style={{minWidth:'150px'}}>NIK / No. ID *</th>
                     <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B]" style={{minWidth:'180px'}}>Nama Lengkap *</th>
                     <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B]" style={{minWidth:'160px'}}>Perusahaan *</th>
                     <th className="px-3 py-2.5 text-left text-xs border border-[#4F378B]" style={{minWidth:'120px'}}>Kategori</th>
-                    <th className="px-2 py-2.5 border border-[#4F378B] w-10"></th>
+                    <th className="px-2 py-2.5 border border-[#4F378B] w-8"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {spreadsheetPesertaRows.map((row, ri) => {
                     const isSelected = selectedRows.has(ri);
                     const bgClass = isSelected ? 'bg-[#EDE7FF]' : ri % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]';
-                    const focusBg = 'focus:bg-[#EDE7FF]';
+
+                    const handleRowSelect = (e: React.MouseEvent) => {
+                      if (e.shiftKey && anchorRow !== null) {
+                        // Shift+klik: pilih range dari anchor ke sini
+                        const min = Math.min(anchorRow, ri);
+                        const max = Math.max(anchorRow, ri);
+                        const next = new Set(selectedRows);
+                        for (let i = min; i <= max; i++) next.add(i);
+                        setSelectedRows(next);
+                      } else if (e.ctrlKey || e.metaKey) {
+                        // Ctrl+klik: toggle satu baris
+                        const next = new Set(selectedRows);
+                        if (next.has(ri)) next.delete(ri); else next.add(ri);
+                        setSelectedRows(next);
+                        setAnchorRow(ri);
+                      } else {
+                        // Klik biasa: pilih hanya baris ini, set anchor
+                        if (selectedRows.size === 1 && selectedRows.has(ri)) {
+                          setSelectedRows(new Set()); setAnchorRow(null);
+                        } else {
+                          setSelectedRows(new Set([ri]));
+                          setAnchorRow(ri);
+                        }
+                      }
+                      setBulkKategori('');
+                    };
 
                     const handlePaste = (col: string) => (e: React.ClipboardEvent<HTMLInputElement>) => {
                       e.preventDefault();
                       const text = e.clipboardData.getData('text');
-                      const lines = text.split('\n').map(l => l.replace(/\r/g, '')).filter(l => l.trim());
+                      const lines = text.split('\n').map((l:string) => l.replace(/\r/g, '')).filter((l:string) => l.trim());
                       const colOrder = ['nik','nama','perusahaan','kategori'];
                       const startColIdx = colOrder.indexOf(col);
                       const newRows = [...spreadsheetPesertaRows];
-                      lines.forEach((line, li) => {
+                      lines.forEach((line:string, li:number) => {
                         const cells = line.split('\t');
                         const idx = ri + li;
                         const rowData = idx < newRows.length ? {...newRows[idx]} : {...emptyPesertaRow()};
-                        cells.forEach((cell, ci) => {
+                        cells.forEach((cell:string, ci:number) => {
                           const targetColIdx = startColIdx + ci;
                           if (targetColIdx < colOrder.length) {
-                            const targetCol = colOrder[targetColIdx];
-                            rowData[targetCol] = cell.trim() || rowData[targetCol];
+                            (rowData as any)[colOrder[targetColIdx]] = cell.trim() || (rowData as any)[colOrder[targetColIdx]];
                           }
                         });
                         if (idx < newRows.length) newRows[idx] = rowData;
@@ -3352,18 +3382,33 @@ export const AdminDashboard: React.FC = () => {
                     };
 
                     return (
-                      <tr key={ri} className={`${bgClass} transition-colors`}>
-                        <td className="px-2 py-1 border border-[#E6E1E5] text-center">
-                          <input type="checkbox" checked={isSelected}
-                            onChange={e => {
-                              const next = new Set(selectedRows);
-                              if (e.target.checked) next.add(ri); else next.delete(ri);
-                              setSelectedRows(next);
-                            }}
-                            className="rounded border-[#CAC4D0] text-[#6750A4]"
-                          />
+                      <tr key={ri} className={`${bgClass} transition-colors`}
+                        onMouseDown={e => {
+                          // Drag start dari nomor baris
+                          if ((e.target as HTMLElement).closest('td')?.classList.contains('row-num')) {
+                            setIsDragging(true);
+                            handleRowSelect(e);
+                          }
+                        }}
+                        onMouseEnter={() => {
+                          if (isDragging) {
+                            // Drag: tambah baris ke selection
+                            const next = new Set(selectedRows);
+                            next.add(ri);
+                            setSelectedRows(next);
+                          }
+                        }}>
+                        {/* Nomor baris - area klik untuk block select */}
+                        <td
+                          className="row-num px-2 py-1 border border-[#E6E1E5] text-center cursor-pointer select-none flex-shrink-0 group"
+                          style={{userSelect:'none'}}
+                          onMouseDown={e => { e.preventDefault(); setIsDragging(true); handleRowSelect(e); }}
+                        >
+                          <div className={`w-7 h-5 rounded flex items-center justify-center text-xs font-bold transition-all
+                            ${isSelected ? 'bg-[#6750A4] text-white' : 'text-[#9CA3AF] group-hover:bg-[#F3F0F5] group-hover:text-[#6750A4]'}`}>
+                            {ri+1}
+                          </div>
                         </td>
-                        <td className="px-3 py-1 border border-[#E6E1E5] text-[#9CA3AF] text-center text-xs w-8">{ri+1}</td>
                         {(['nik','nama','perusahaan'] as const).map(col => (
                           <td key={col} className="border border-[#E6E1E5] p-0">
                             <input
@@ -3371,19 +3416,19 @@ export const AdminDashboard: React.FC = () => {
                               placeholder={col === 'nik' ? 'Klik lalu Ctrl+V' : ''}
                               onChange={e => { const nr=[...spreadsheetPesertaRows]; nr[ri]={...nr[ri],[col]:e.target.value}; setSpreadsheetPesertaRows(nr); }}
                               onPaste={handlePaste(col)}
-                              className={`w-full px-2 py-1.5 outline-none ${focusBg} text-xs`}
+                              className={`w-full px-2 py-1.5 outline-none focus:bg-[#EDE7FF] text-xs ${isSelected ? 'bg-[#EDE7FF]' : ''}`}
                             />
                           </td>
                         ))}
                         <td className="border border-[#E6E1E5] p-0">
                           <select value={row.kategori}
                             onChange={e => { const nr=[...spreadsheetPesertaRows]; nr[ri]={...nr[ri],kategori:e.target.value}; setSpreadsheetPesertaRows(nr); }}
-                            className={`w-full px-2 py-1.5 outline-none text-xs bg-transparent ${isSelected ? 'font-bold text-[#6750A4]' : ''}`}>
+                            className={`w-full px-2 py-1.5 outline-none text-xs bg-transparent ${isSelected ? 'bg-[#EDE7FF] font-bold text-[#6750A4]' : ''}`}>
                             {['Karyawan','Magang','Visitor','Kontraktor'].map(k=><option key={k}>{k}</option>)}
                           </select>
                         </td>
                         <td className="border border-[#E6E1E5] text-center">
-                          <button onClick={() => { setSpreadsheetPesertaRows(rows=>rows.filter((_,i)=>i!==ri)); const next = new Set(selectedRows); next.delete(ri); setSelectedRows(next); }} className="p-1 text-[#CAC4D0] hover:text-[#B3261E]"><X size={14}/></button>
+                          <button onClick={() => { setSpreadsheetPesertaRows(rows=>rows.filter((_,i)=>i!==ri)); const next=new Set(selectedRows); next.delete(ri); setSelectedRows(next); }} className="p-1 text-[#CAC4D0] hover:text-[#B3261E]"><X size={14}/></button>
                         </td>
                       </tr>
                     );
@@ -3394,25 +3439,13 @@ export const AdminDashboard: React.FC = () => {
 
             {/* Footer */}
             <div className="p-4 border-t border-[#E6E1E5] flex items-center justify-between gap-3 flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <button onClick={() => setSpreadsheetPesertaRows(r => [...r, ...Array.from({length:5},emptyPesertaRow)])}
-                  className="px-4 py-2 rounded-xl border border-[#E6E1E5] text-sm font-medium hover:bg-[#F3F0F5] flex items-center gap-2">
-                  <Plus size={16}/> Tambah 5 Baris
-                </button>
-                {selectedRows.size > 0 && (
-                  <button
-                    onClick={() => {
-                      setSpreadsheetPesertaRows(rows => rows.filter((_,i) => !selectedRows.has(i)));
-                      setSelectedRows(new Set());
-                    }}
-                    className="px-4 py-2 rounded-xl border border-[#F9DEDC] text-sm font-medium text-[#B3261E] hover:bg-[#F9DEDC] flex items-center gap-2">
-                    <Trash2 size={16}/> Hapus {selectedRows.size} Baris
-                  </button>
-                )}
-              </div>
+              <button onClick={() => setSpreadsheetPesertaRows(r => [...r, ...Array.from({length:5},emptyPesertaRow)])}
+                className="px-4 py-2 rounded-xl border border-[#E6E1E5] text-sm font-medium hover:bg-[#F3F0F5] flex items-center gap-2">
+                <Plus size={16}/> Tambah 5 Baris
+              </button>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-[#49454F]">{spreadsheetPesertaRows.filter(r=>r.nik&&r.nama&&r.perusahaan).length} baris valid</span>
-                <button onClick={() => { setShowSpreadsheetPeserta(false); setSelectedRows(new Set()); setBulkKategori(''); }}
+                <button onClick={() => { setShowSpreadsheetPeserta(false); setSelectedRows(new Set()); setAnchorRow(null); setBulkKategori(''); }}
                   className="px-5 py-2.5 rounded-xl border border-[#E6E1E5] font-bold text-[#49454F] hover:bg-[#F3F0F5]">Batal</button>
                 <button onClick={handleSaveSpreadsheetPeserta} disabled={savingSpreadsheet}
                   className="px-6 py-2.5 rounded-xl bg-[#6750A4] text-white font-bold shadow-md hover:bg-[#4F378B] disabled:opacity-50 flex items-center gap-2">
