@@ -235,8 +235,9 @@ export const ParticipantFlow: React.FC = () => {
     navigate('/');
   };
 
-  const nextStep = () => setStep(prev => prev + 1);
-  const prevStep = () => setStep(prev => prev - 1);
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  const nextStep = () => { setStep(prev => prev + 1); scrollToTop(); };
+  const prevStep = () => { setStep(prev => prev - 1); scrollToTop(); };
 
   const startExam = async () => {
     const preferredExamId = localStorage.getItem('preferred_exam');
@@ -381,10 +382,12 @@ export const ParticipantFlow: React.FC = () => {
       setExamResult(result);
       localStorage.removeItem('preferred_exam');
       setStep(4);
+      scrollToTop();
     } catch (err) {
       console.error(err);
       setExamResult(result);
       setStep(4);
+      scrollToTop();
     } finally {
       setLoading(false);
     }
