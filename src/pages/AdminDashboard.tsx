@@ -406,15 +406,20 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const toggleJenisStatus = async (id: string, currentStatus: boolean) => {
+    // Optimistic update — UI langsung berubah
+    setJenisUjian(prev => prev.map(j => j.id === id ? { ...j, is_active: !currentStatus } : j));
     try {
       const { error } = await supabase
         .from('jenis_ujian')
         .update({ is_active: !currentStatus })
         .eq('id', id);
-      
-      if (error) throw error;
-      fetchData();
+      if (error) {
+        // Rollback jika gagal
+        setJenisUjian(prev => prev.map(j => j.id === id ? { ...j, is_active: currentStatus } : j));
+        console.error(error);
+      }
     } catch (err) {
+      setJenisUjian(prev => prev.map(j => j.id === id ? { ...j, is_active: currentStatus } : j));
       console.error(err);
     }
   };
@@ -1421,16 +1426,14 @@ export const AdminDashboard: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <select 
-                          value={j.is_active ? 'on' : 'off'}
-                          onChange={() => toggleJenisStatus(j.id, j.is_active)}
-                          className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase border-none focus:ring-0 cursor-pointer ${
+                        <button
+                          onClick={() => toggleJenisStatus(j.id, j.is_active)}
+                          className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase cursor-pointer transition-all hover:opacity-80 ${
                             j.is_active ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'
                           }`}
                         >
-                          <option value="on">🟢 ON</option>
-                          <option value="off">🔴 OFF</option>
-                        </select>
+                          {j.is_active ? '🟢 ON' : '🔴 OFF'}
+                        </button>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex gap-1">
