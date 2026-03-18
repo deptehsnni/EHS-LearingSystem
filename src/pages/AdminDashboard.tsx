@@ -1360,191 +1360,215 @@ export const AdminDashboard: React.FC = () => {
         </header>
 
         {activeTab === 'overview' && (
-          <div className="space-y-8">
-            {/* Dashboard Header & Filters */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-[32px] border border-[#E6E1E5] shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-[#EADDFF] text-[#21005D] rounded-2xl">
-                  <LayoutDashboard size={24} />
-                </div>
+          <div className="space-y-6">
+
+            {/* Hero Banner */}
+            <motion.div
+              initial={{ opacity: 0, y: -16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="relative overflow-hidden rounded-[28px] p-6 md:p-8"
+              style={{ background: 'linear-gradient(135deg, #1A0533 0%, #2D1254 40%, #0F2A2A 100%)' }}
+            >
+              {/* Decorative circles */}
+              <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #E6A620 0%, transparent 70%)' }} />
+              <div className="absolute bottom-0 left-1/3 w-32 h-32 rounded-full opacity-5" style={{ background: 'radial-gradient(circle, #6750A4 0%, transparent 70%)' }} />
+              <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h3 className="text-xl font-bold">Ringkasan Statistik</h3>
-                  <p className="text-sm text-[#49454F]">Pantau performa pelatihan dan ujian</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] mb-1" style={{ color: '#E6A620' }}>EHS Learning System</p>
+                  <h2 className="text-2xl md:text-3xl font-black text-white leading-tight">Dashboard Analitik</h2>
+                  <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Pantau performa pelatihan & ujian secara real-time</p>
                 </div>
-              </div>
-              
-              <div className="flex items-center gap-3 w-full md:w-auto">
-                <div className="relative flex-1 md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#49454F]" size={18} />
-                  <select 
+                <div className="flex items-center gap-3">
+                  <select
                     value={dashboardFilterJenis}
                     onChange={(e) => setDashboardFilterJenis(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-[#F3F0F5] border-none rounded-xl focus:ring-2 focus:ring-[#6750A4] text-sm font-medium appearance-none"
+                    className="px-4 py-2.5 rounded-xl text-sm font-medium border-0 focus:ring-2 focus:ring-[#E6A620] outline-none"
+                    style={{ background: 'rgba(255,255,255,0.1)', color: 'white', backdropFilter: 'blur(8px)' }}
                   >
-                    <option value="all">Semua Jenis Ujian</option>
+                    <option value="all" style={{ background: '#2D1254', color: 'white' }}>Semua Jenis Ujian</option>
                     {jenisUjian.map(j => (
-                      <option key={j.id} value={j.id}>{j.nama}</option>
+                      <option key={j.id} value={j.id} style={{ background: '#2D1254', color: 'white' }}>{j.nama}</option>
                     ))}
                   </select>
+                  <button
+                    onClick={() => setShowDashboardSettings(true)}
+                    className="p-2.5 rounded-xl transition-all"
+                    style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }}
+                    title="Pengaturan Dashboard"
+                  >
+                    <Settings size={18} />
+                  </button>
                 </div>
-                <button 
-                  onClick={() => setShowDashboardSettings(true)}
-                  className="p-3 bg-[#F3F0F5] text-[#49454F] rounded-xl hover:bg-[#EADDFF] hover:text-[#21005D] transition-all"
-                  title="Pengaturan Dashboard"
-                >
-                  <Settings size={20} />
-                </button>
               </div>
+            </motion.div>
+
+            {/* Metric Cards — 2 besar + 4 kecil */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Card besar 1 - Total Ujian */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+                className="col-span-2 lg:col-span-1 relative overflow-hidden rounded-[24px] p-6 flex flex-col justify-between min-h-[140px]"
+                style={{ background: 'linear-gradient(135deg, #6750A4 0%, #4F378B 100%)' }}>
+                <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full opacity-20" style={{ background: 'white' }} />
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-white/60 mb-2">Total Ujian Selesai</p>
+                  <h3 className="text-5xl font-black text-white">{stats.totalPesertaUjian}</h3>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <span className="text-xs text-white/60">Jumlah Attempt</span>
+                  <div className="p-2 rounded-xl bg-white/20"><Users size={16} className="text-white" /></div>
+                </div>
+              </motion.div>
+
+              {/* Card besar 2 - Tingkat Kelulusan */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                className="col-span-2 lg:col-span-1 relative overflow-hidden rounded-[24px] p-6 flex flex-col justify-between min-h-[140px]"
+                style={{ background: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%)' }}>
+                <div className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full opacity-20" style={{ background: 'white' }} />
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-white/60 mb-2">Tingkat Kelulusan</p>
+                  <div className="flex items-end gap-2">
+                    <h3 className="text-5xl font-black text-white">{stats.lulusRate}</h3>
+                    <span className="text-2xl font-black text-white/70 mb-1">%</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex-1 bg-white/20 rounded-full h-1.5 mr-3">
+                    <div className="h-1.5 rounded-full bg-white transition-all" style={{ width: `${stats.lulusRate}%` }} />
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/20"><CheckCircle2 size={16} className="text-white" /></div>
+                </div>
+              </motion.div>
+
+              {/* Card kecil 1 - Rata-rata Nilai */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                className="rounded-[24px] p-5 flex flex-col justify-between bg-white border border-[#E6E1E5] shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#49454F]">Rata-rata Nilai</p>
+                  <div className="p-2 rounded-xl bg-[#EADDFF]"><BarChart3 size={14} className="text-[#6750A4]" /></div>
+                </div>
+                <h3 className="text-3xl font-black text-[#1C1B1F]">{stats.avgNilai}</h3>
+                <p className="text-[10px] text-[#9CA3AF] mt-2">Dari semua ujian</p>
+              </motion.div>
+
+              {/* Card kecil 2 - Bulan Ini */}
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                className="rounded-[24px] p-5 flex flex-col justify-between bg-white border border-[#E6E1E5] shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#49454F]">Bulan Ini</p>
+                  <div className="p-2 rounded-xl bg-[#FFF8E1]"><Clock size={14} className="text-[#F57F17]" /></div>
+                </div>
+                <h3 className="text-3xl font-black text-[#1C1B1F]">{stats.thisMonthCount}</h3>
+                <span className={`text-[10px] font-bold mt-2 px-2 py-0.5 rounded-full w-fit ${
+                  stats.trendLulus > 0 ? 'bg-[#E8F5E9] text-[#2E7D32]' :
+                  stats.trendLulus < 0 ? 'bg-[#F9DEDC] text-[#B3261E]' :
+                  'bg-[#F3F0F5] text-[#49454F]'
+                }`}>
+                  {stats.trendLulus > 0 ? `+${stats.trendLulus}%` : stats.trendLulus < 0 ? `${stats.trendLulus}%` : '~'} lulus
+                </span>
+              </motion.div>
             </div>
 
-            {/* Metric Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <div className="bg-white p-6 rounded-3xl border border-[#E6E1E5] shadow-sm flex flex-col justify-between">
-                <div>
-                  <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Total Ujian Selesai</p>
-                  <h3 className="text-3xl font-bold">{stats.totalPesertaUjian}</h3>
+            {/* Stats Strip */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }}
+              className="grid grid-cols-2 md:grid-cols-2 gap-4">
+              <div className="bg-white rounded-[20px] border border-[#E6E1E5] p-4 flex items-center gap-4">
+                <div className="p-3 rounded-2xl" style={{ background: 'linear-gradient(135deg, #E3F2FD, #BBDEFB)' }}>
+                  <BookOpen size={20} className="text-[#1565C0]" />
                 </div>
-                <div className="mt-4 pt-4 border-t border-[#F3F0F5] flex items-center justify-between">
-                  <span className="text-[10px] text-[#49454F]">Jumlah Attempt</span>
-                  <Users size={16} className="text-[#6750A4]" />
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#49454F]">Jenis Ujian</p>
+                  <p className="text-2xl font-black text-[#1C1B1F]">{stats.totalUjianSistem}</p>
                 </div>
               </div>
-
-              <div className="bg-white p-6 rounded-3xl border border-[#E6E1E5] shadow-sm flex flex-col justify-between">
-                <div>
-                  <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Total Jenis Ujian</p>
-                  <h3 className="text-3xl font-bold">{stats.totalUjianSistem}</h3>
+              <div className="bg-white rounded-[20px] border border-[#E6E1E5] p-4 flex items-center gap-4">
+                <div className="p-3 rounded-2xl" style={{ background: 'linear-gradient(135deg, #E0F2F1, #B2DFDB)' }}>
+                  <ClipboardCheck size={20} className="text-[#006A6A]" />
                 </div>
-                <div className="mt-4 pt-4 border-t border-[#F3F0F5] flex items-center justify-between">
-                  <span className="text-[10px] text-[#49454F]">Dalam Sistem</span>
-                  <BookOpen size={16} className="text-[#006A6A]" />
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#49454F]">Total Submit</p>
+                  <p className="text-2xl font-black text-[#1C1B1F]">{stats.totalAttempts}</p>
                 </div>
               </div>
+            </motion.div>
 
-              <div className="bg-white p-6 rounded-3xl border border-[#E6E1E5] shadow-sm flex flex-col justify-between">
-                <div>
-                  <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Tingkat Kelulusan</p>
-                  <h3 className="text-3xl font-bold">{stats.lulusRate}%</h3>
-                </div>
-                <div className="mt-4 pt-4 border-t border-[#F3F0F5] flex items-center justify-between">
-                  <span className="text-[10px] text-[#49454F]">Rata-rata</span>
-                  <CheckCircle2 size={16} className="text-[#2E7D32]" />
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-3xl border border-[#E6E1E5] shadow-sm flex flex-col justify-between">
-                <div>
-                  <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Ujian Dilakukan</p>
-                  <h3 className="text-3xl font-bold">{stats.totalAttempts}</h3>
-                </div>
-                <div className="mt-4 pt-4 border-t border-[#F3F0F5] flex items-center justify-between">
-                  <span className="text-[10px] text-[#49454F]">Total Submit</span>
-                  <ClipboardCheck size={16} className="text-[#F57F17]" />
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-3xl border border-[#E6E1E5] shadow-sm flex flex-col justify-between">
-                <div>
-                  <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Rata-rata Nilai</p>
-                  <h3 className="text-3xl font-bold">{stats.avgNilai}</h3>
-                </div>
-                <div className="mt-4 pt-4 border-t border-[#F3F0F5] flex items-center justify-between">
-                  <span className="text-[10px] text-[#49454F]">Semua ujian</span>
-                  <BarChart3 size={16} className="text-[#6750A4]" />
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-3xl border border-[#E6E1E5] shadow-sm flex flex-col justify-between">
-                <div>
-                  <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Bulan Ini</p>
-                  <h3 className="text-3xl font-bold">{stats.thisMonthCount}</h3>
-                </div>
-                <div className="mt-4 pt-4 border-t border-[#F3F0F5] flex items-center justify-between">
-                  <span className="text-[10px] text-[#49454F]">Ujian selesai</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    stats.trendLulus > 0 ? 'bg-[#E8F5E9] text-[#2E7D32]' :
-                    stats.trendLulus < 0 ? 'bg-[#F9DEDC] text-[#B3261E]' :
-                    'bg-[#F3F0F5] text-[#49454F]'
-                  }`}>
-                    {stats.trendLulus > 0 ? `+${stats.trendLulus}%` : stats.trendLulus < 0 ? `${stats.trendLulus}%` : '~'} lulus
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Charts Row 1: Pie & Month */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {dashboardConfig.showPieChart && (
-                <div className="bg-white p-8 rounded-[32px] border border-[#E6E1E5] shadow-sm lg:col-span-1">
-                  <h4 className="text-lg font-bold mb-6">Distribusi Peserta</h4>
-                  <div className="h-64">
+                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}
+                  className="bg-white rounded-[24px] border border-[#E6E1E5] shadow-sm p-6">
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-1 h-5 rounded-full bg-[#6750A4]" />
+                    <h4 className="text-sm font-bold text-[#1C1B1F]">Distribusi Peserta</h4>
+                  </div>
+                  <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
+                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={78} paddingAngle={4} dataKey="value">
                           {pieData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 mt-4">
+                  <div className="grid grid-cols-2 gap-2 mt-2">
                     {pieData.map((d, i) => (
                       <div key={d.name} className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i] }} />
+                        <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: COLORS[i] }} />
                         <span className="text-[10px] text-[#49454F] truncate">{d.name}</span>
                       </div>
                     ))}
                   </div>
-                </div>
+                </motion.div>
               )}
 
               {dashboardConfig.showBarChartMonth && (
-                <div className={clsx(
-                  "bg-white p-8 rounded-[32px] border border-[#E6E1E5] shadow-sm",
-                  dashboardConfig.showPieChart ? "lg:col-span-2" : "lg:col-span-3"
-                )}>
-                  <h4 className="text-lg font-bold mb-6">Peserta Bulan Ini</h4>
-                  <div className="h-64">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+                  className={clsx("bg-white rounded-[24px] border border-[#E6E1E5] shadow-sm p-6",
+                    dashboardConfig.showPieChart ? "lg:col-span-2" : "lg:col-span-3")}>
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-1 h-5 rounded-full bg-[#6750A4]" />
+                    <h4 className="text-sm font-bold text-[#1C1B1F]">Peserta Bulan Ini</h4>
+                  </div>
+                  <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={barChartMonthData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E6E1E5" />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#49454F', fontSize: 12 }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#49454F', fontSize: 12 }} />
-                        <Tooltip cursor={{ fill: '#F3F0F5' }} />
-                        <Bar dataKey="val" fill="#6750A4" radius={[4, 4, 0, 0]} barSize={40} />
+                      <BarChart data={barChartMonthData} barSize={28}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F0F5" />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                        <Tooltip cursor={{ fill: '#F3F0F5', radius: 8 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
+                        <Bar dataKey="val" fill="#6750A4" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
 
-            {/* Charts Row 2: Year */}
             {dashboardConfig.showBarChartYear && (
-              <div className="bg-white p-8 rounded-[32px] border border-[#E6E1E5] shadow-sm">
-                <h4 className="text-lg font-bold mb-6">Peserta Tahun Ini ({new Date().getFullYear()})</h4>
-                <div className="h-72">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+                className="bg-white rounded-[24px] border border-[#E6E1E5] shadow-sm p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 rounded-full bg-[#006A6A]" />
+                    <h4 className="text-sm font-bold text-[#1C1B1F]">Tren Ujian Tahun {new Date().getFullYear()}</h4>
+                  </div>
+                  <span className="text-[10px] font-bold text-[#49454F] bg-[#F3F0F5] px-3 py-1 rounded-full">Per Bulan</span>
+                </div>
+                <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={barChartYearData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E6E1E5" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#49454F', fontSize: 12 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#49454F', fontSize: 12 }} />
-                      <Tooltip cursor={{ fill: '#F3F0F5' }} />
-                      <Bar dataKey="val" fill="#006A6A" radius={[4, 4, 0, 0]} />
+                    <BarChart data={barChartYearData} barSize={22}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F0F5" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                      <Tooltip cursor={{ fill: '#F0FAFA', radius: 8 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
+                      <Bar dataKey="val" fill="#006A6A" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
         )}
