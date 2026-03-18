@@ -41,8 +41,42 @@ export const ParticipantFlow: React.FC = () => {
   const [violationType, setViolationType] = useState<'tab' | 'screenshot' | 'copy'>('tab');
   const [isObscured, setIsObscured] = useState(false);
   const [copyViolations, setCopyViolations] = useState(0);
+  const [totalViolations, setTotalViolations] = useState(0);
+  const [showPenaltyModal, setShowPenaltyModal] = useState(false);
+  const [penaltyCountdown, setPenaltyCountdown] = useState(0);
+  const [sessionInactive, setSessionInactive] = useState(false);
+  const penaltyTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   const navigate = useNavigate();
+
+  // Fungsi pencatat pelanggaran dengan penalti bertingkat
+  const recordViolation = React.useCallback((type: 'tab' | 'screenshot' | 'copy') => {
+    if (type === 'tab') setTabViolations(v => v + 1);
+    else if (type === 'screenshot') setScreenshotViolations(v => v + 1);
+    else setCopyViolations(v => v + 1);
+
+    setTotalViolations(prev => {
+      const next = prev + 1;
+      setViolationType(type);
+      // Penalti ke-4: 2 menit
+      if (next === 4) {
+        setPenaltyCountdown(120);
+        setShowPenaltyModal(true);
+      // Penalti ke-5: 4 menit
+      } else if (next === 5) {
+        setPenaltyCountdown(240);
+        setShowPenaltyModal(true);
+      // Penalti ke-6+: 10 menit
+      } else if (next >= 6) {
+        setPenaltyCountdown(600);
+        setShowPenaltyModal(true);
+      } else {
+        // Sebelum ke-4: hanya tampilkan warning biasa
+        setShowViolationWarning(true);
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem('ehs_participant');
@@ -78,19 +112,42 @@ export const ParticipantFlow: React.FC = () => {
     }
   }, [examStarted, timeLeft, examResult]);
 
+  // Penalty countdown effect
+  useEffect(() => {
+    if (penaltyCountdown > 0) {
+      const t = setInterval(() => setPenaltyCountdown(prev => {
+        if (prev <= 1) { clearInterval(t); setShowPenaltyModal(false); return 0; }
+        return prev - 1;
+      }), 1000);
+      return () => clearInterval(t);
+    }
+  }, [penaltyCountdown]);
+
+  // Cek sesi ujian masih aktif setiap 30 detik
+  useEffect(() => {
+    if (!examStarted || examResult || !currentJenis) return;
+    const checkSession = async () => {
+      const { data } = await supabase
+        .from('jenis_ujian')
+        .select('is_active')
+        .eq('id', currentJenis.id)
+        .single();
+      if (data && !data.is_active) setSessionInactive(true);
+    };
+    checkSession();
+    const interval = setInterval(checkSession, 30000);
+    return () => clearInterval(interval);
+  }, [examStarted, examResult, currentJenis]);
+
   // Anti-Cheat Effects
   useEffect(() => {
     if (examStarted && !examResult) {
       const handleVisibilityChange = () => {
         if (document.visibilityState === 'hidden') {
-          // Tampilkan overlay hitam saat app di-background (termasuk saat screenshot di mobile)
           setIsObscured(true);
-          setTabViolations(v => v + 1);
-          setViolationType('tab');
+          recordViolation('tab');
         } else {
-          // Saat kembali ke foreground, sembunyikan overlay dan tampilkan warning
           setIsObscured(false);
-          setShowViolationWarning(true);
         }
       };
 
@@ -98,13 +155,8 @@ export const ParticipantFlow: React.FC = () => {
         setTimeout(() => {
           if (!document.hasFocus() && !examResult) {
             setIsObscured(true);
-            setTabViolations(v => v + 1);
-            setViolationType('tab');
-            // Auto-sembunyikan overlay setelah 1.5 detik dan tampilkan warning
-            setTimeout(() => {
-              setIsObscured(false);
-              setShowViolationWarning(true);
-            }, 1500);
+            recordViolation('tab');
+            setTimeout(() => setIsObscured(false), 1500);
           }
         }, 100);
       };
@@ -118,10 +170,8 @@ export const ParticipantFlow: React.FC = () => {
         // PrintScreen
         if (e.key === 'PrintScreen' || e.keyCode === 44) {
           e.preventDefault();
-          setScreenshotViolations(v => v + 1);
-          setViolationType('screenshot');
-          setShowViolationWarning(true);
           triggerObscure();
+          recordViolation('screenshot');
           return false;
         }
         
@@ -132,10 +182,8 @@ export const ParticipantFlow: React.FC = () => {
           (e.ctrlKey && (e.key === 'u' || e.key === 'p' || e.key === 's'))
         ) {
           e.preventDefault();
-          setScreenshotViolations(v => v + 1);
-          setViolationType('screenshot');
-          setShowViolationWarning(true);
           triggerObscure();
+          recordViolation('screenshot');
           return false;
         }
       };
@@ -147,14 +195,12 @@ export const ParticipantFlow: React.FC = () => {
 
       const handleCopy = (e: ClipboardEvent) => {
         e.preventDefault();
-        setCopyViolations(v => v + 1);
-        setViolationType('copy');
-        setShowViolationWarning(true);
+        recordViolation('copy');
       };
 
       const handleCut = (e: ClipboardEvent) => {
         e.preventDefault();
-        setCopyViolations(v => v + 1);
+        recordViolation('copy');
       };
 
       const handlePaste = (e: ClipboardEvent) => {
@@ -182,6 +228,24 @@ export const ParticipantFlow: React.FC = () => {
   }, [examStarted, examResult]);
 
   if (!participant) return null;
+
+  // Fungsi terpusat pencatat pelanggaran + trigger penalti
+  const recordViolation = (type: 'tab' | 'screenshot' | 'copy') => {
+    setViolationType(type);
+    if (type === 'tab') setTabViolations(v => v + 1);
+    else if (type === 'screenshot') setScreenshotViolations(v => v + 1);
+    else setCopyViolations(v => v + 1);
+
+    setTotalViolations(prev => {
+      const next = prev + 1;
+      // Penalti mulai di pelanggaran ke-4, 5, 6+
+      if (next === 4) { setPenaltyCountdown(120); setShowPenaltyModal(true); }
+      else if (next === 5) { setPenaltyCountdown(240); setShowPenaltyModal(true); }
+      else if (next >= 6) { setPenaltyCountdown(600); setShowPenaltyModal(true); }
+      else { setShowViolationWarning(true); }
+      return next;
+    });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('ehs_participant');
@@ -276,6 +340,19 @@ export const ParticipantFlow: React.FC = () => {
   };
 
   const submitExam = async () => {
+    // Cek sesi masih aktif sebelum submit
+    if (currentJenis) {
+      const { data: jenisCheck } = await supabase
+        .from('jenis_ujian')
+        .select('is_active')
+        .eq('id', currentJenis.id)
+        .single();
+      if (jenisCheck && !jenisCheck.is_active) {
+        setSessionInactive(true);
+        return;
+      }
+    }
+
     setLoading(true);
     let correctCount = 0;
     questions.forEach(q => {
@@ -422,7 +499,75 @@ export const ParticipantFlow: React.FC = () => {
           )}
         </AnimatePresence>
 
-        {/* Violation Warning Modal */}
+        {/* Penalty Modal - tidak bisa ditutup sampai countdown selesai */}
+        <AnimatePresence>
+          {showPenaltyModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border-4 border-[#B3261E]"
+              >
+                <div className="w-20 h-20 bg-[#F9DEDC] text-[#B3261E] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle size={48} />
+                </div>
+                <h3 className="text-2xl font-black text-[#B3261E] mb-2">PENALTI KECURANGAN!</h3>
+                <p className="text-[#49454F] mb-2">
+                  Anda telah melakukan <span className="font-black text-[#B3261E]">{totalViolations} kali</span> pelanggaran.
+                  Anda mendapat penalti dan harus menunggu sebelum melanjutkan ujian.
+                </p>
+                <div className="my-6 p-4 bg-[#F9DEDC] rounded-2xl">
+                  <p className="text-xs text-[#B3261E] font-bold uppercase tracking-wider mb-1">Waktu Tunggu</p>
+                  <p className="text-5xl font-black text-[#B3261E] font-mono">
+                    {String(Math.floor(penaltyCountdown / 60)).padStart(2,'0')}:{String(penaltyCountdown % 60).padStart(2,'0')}
+                  </p>
+                </div>
+                <p className="text-xs text-[#49454F]">
+                  {totalViolations === 4 ? 'Penalti 1: 2 menit tunggu' :
+                   totalViolations === 5 ? 'Penalti 2: 4 menit tunggu' :
+                   'Penalti 3+: 10 menit tunggu'}
+                  {' '}— Tombol aktif setelah countdown selesai.
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Session Inactive Modal */}
+        <AnimatePresence>
+          {sessionInactive && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border-4 border-[#F57F17]"
+              >
+                <div className="w-20 h-20 bg-[#FFF8E1] text-[#F57F17] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle size={48} />
+                </div>
+                <h3 className="text-2xl font-black text-[#F57F17] mb-3">Sesi Ujian Ditutup</h3>
+                <p className="text-[#49454F] mb-6">
+                  Admin telah menonaktifkan sesi ujian ini. Jawaban Anda tidak dapat dikirimkan. Silakan hubungi Admin untuk informasi lebih lanjut.
+                </p>
+                <button
+                  onClick={handleLogout}
+                  className="w-full py-4 bg-[#F57F17] text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-[#E65100] transition-all"
+                >
+                  Keluar
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <AnimatePresence>
           {showViolationWarning && (
             <motion.div 
@@ -440,22 +585,27 @@ export const ParticipantFlow: React.FC = () => {
                   <AlertTriangle size={48} />
                 </div>
                 <h3 className="text-2xl font-black text-[#B3261E] mb-4">PERINGATAN PELANGGARAN!</h3>
-                <p className="text-[#49454F] mb-8 text-lg">
+                <p className="text-[#49454F] mb-4 text-lg">
                   {violationType === 'tab' 
-                    ? 'Anda terdeteksi berpindah tab atau meninggalkan layar ujian. Tindakan ini dicatat sebagai upaya kecurangan.' 
+                    ? 'Anda terdeteksi berpindah tab atau meninggalkan layar ujian.' 
                     : violationType === 'copy'
-                    ? 'Dilarang menyalin (copy) teks soal! Tindakan ini melanggar peraturan integritas ujian dan telah dicatat.'
-                    : 'Dilarang melakukan screenshot atau menyalin konten ujian! Tindakan ini melanggar peraturan keamanan.'}
+                    ? 'Dilarang menyalin (copy) teks soal!'
+                    : 'Dilarang melakukan screenshot atau menyalin konten ujian!'}
                 </p>
+                <div className="bg-[#FFF8E1] border border-[#FFE082] rounded-xl p-3 mb-6">
+                  <p className="text-sm text-[#F57F17] font-bold">
+                    Pelanggaran ke-{totalViolations} dari 3 sebelum penalti.
+                    {totalViolations < 3 
+                      ? ` Sisa ${3 - totalViolations} pelanggaran lagi sebelum Anda mendapat penalti tunggu.`
+                      : ' Pelanggaran berikutnya akan dikenakan PENALTI waktu tunggu!'}
+                  </p>
+                </div>
                 <button 
                   onClick={() => setShowViolationWarning(false)}
                   className="w-full py-4 bg-[#B3261E] text-white rounded-2xl font-bold text-xl shadow-lg hover:bg-[#8C1D18] transition-all"
                 >
                   SAYA MENGERTI & KEMBALI
                 </button>
-                <p className="mt-4 text-xs text-[#49454F]">
-                  Pelanggaran berulang dapat menyebabkan ujian Anda dibatalkan secara otomatis.
-                </p>
               </motion.div>
             </motion.div>
           )}
@@ -673,7 +823,7 @@ export const ParticipantFlow: React.FC = () => {
                     <div key={i} className="flex gap-8 whitespace-nowrap">
                       {Array.from({ length: 6 }).map((_, j) => (
                         <span key={j} className="text-sm font-bold text-[#6750A4] shrink-0">
-                          {participant.nama} · {participant.nik}
+                          {participant.nama} · {participant.nik} · {participant.perusahaan}
                         </span>
                       ))}
                     </div>
@@ -720,7 +870,7 @@ export const ParticipantFlow: React.FC = () => {
                     {/* Watermark per kartu soal */}
                     <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center" style={{opacity: 0.045}}>
                       <p className="text-xl sm:text-3xl font-black text-[#6750A4] whitespace-nowrap" style={{transform: 'rotate(-35deg)'}}>
-                        {participant.nama} · {participant.nik}
+                        {participant.nama} · {participant.nik} · {participant.perusahaan}
                       </p>
                     </div>
                     <div className="flex items-start gap-3 mb-4 sm:mb-6">
