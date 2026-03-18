@@ -520,6 +520,9 @@ export const AdminDashboard: React.FC = () => {
         // Rollback jika gagal
         setJenisUjian(prev => prev.map(j => j.id === id ? { ...j, is_active: currentStatus } : j));
         console.error(error);
+      } else {
+        // Fetch ulang untuk pastikan sinkron dengan database
+        fetchData();
       }
     } catch (err) {
       setJenisUjian(prev => prev.map(j => j.id === id ? { ...j, is_active: currentStatus } : j));
