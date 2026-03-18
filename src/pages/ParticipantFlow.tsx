@@ -46,6 +46,7 @@ export const ParticipantFlow: React.FC = () => {
   const [penaltyCountdown, setPenaltyCountdown] = useState(0);
   const [sessionInactive, setSessionInactive] = useState(false);
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
+  const [kickedByOtherDevice, setKickedByOtherDevice] = useState(false);
 
   const navigate = useNavigate();
 
@@ -126,18 +127,43 @@ export const ParticipantFlow: React.FC = () => {
   // Cek sesi ujian masih aktif setiap 30 detik
   useEffect(() => {
     if (!examStarted || examResult || !currentJenis) return;
+    const localToken = localStorage.getItem('ehs_session_token');
+
     const checkSession = async () => {
-      const { data } = await supabase
-        .from('jenis_ujian')
-        .select('is_active')
-        .eq('id', currentJenis.id)
-        .single();
-      if (data && !data.is_active) setSessionInactive(true);
+      // Cek is_active dan token sekaligus dalam 1 roundtrip
+      const [jenisRes, sessionRes] = await Promise.all([
+        supabase.from('jenis_ujian').select('is_active').eq('id', currentJenis.id).single(),
+        localToken
+          ? supabase.from('peserta_sessions').select('token').eq('nik', participant?.nik || '').single()
+          : Promise.resolve({ data: null })
+      ]);
+
+      // Cek sesi ujian masih aktif
+      if (jenisRes.data && !jenisRes.data.is_active) {
+        setSessionInactive(true);
+        return;
+      }
+
+      // Cek token masih valid (tidak login di device lain)
+      if (localToken && sessionRes.data && sessionRes.data.token !== localToken) {
+        setKickedByOtherDevice(true);
+        localStorage.removeItem('ehs_session_token');
+        localStorage.removeItem('ehs_participant');
+        return;
+      }
+
+      // Update last_active agar device lain tahu sesi ini masih hidup
+      if (localToken) {
+        await supabase.from('peserta_sessions')
+          .update({ last_active: new Date().toISOString() })
+          .eq('nik', participant?.nik || '');
+      }
     };
+
     checkSession();
     const interval = setInterval(checkSession, 30000);
     return () => clearInterval(interval);
-  }, [examStarted, examResult, currentJenis]);
+  }, [examStarted, examResult, currentJenis, participant]);
 
   // Anti-Cheat Effects
   useEffect(() => {
@@ -230,7 +256,12 @@ export const ParticipantFlow: React.FC = () => {
   if (!participant) return null;
 
   const handleLogout = () => {
+    const token = localStorage.getItem('ehs_session_token');
+    if (token && participant?.nik) {
+      supabase.from('peserta_sessions').delete().eq('nik', participant.nik).then(() => {});
+    }
     localStorage.removeItem('ehs_participant');
+    localStorage.removeItem('ehs_session_token');
     localStorage.removeItem('preferred_exam');
     navigate('/');
   };
@@ -555,6 +586,38 @@ export const ParticipantFlow: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+        <AnimatePresence>
+          {kickedByOtherDevice && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border-4 border-[#B3261E]"
+              >
+                <div className="w-20 h-20 bg-[#F9DEDC] text-[#B3261E] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle size={48} />
+                </div>
+                <h3 className="text-2xl font-black text-[#B3261E] mb-3">Sesi Diakhiri</h3>
+                <p className="text-[#49454F] mb-6">
+                  Akun Anda telah login di perangkat lain. Untuk keamanan, sesi ini telah diakhiri secara otomatis.
+                  <br /><br />
+                  Jika bukan Anda yang melakukan ini, segera hubungi Admin.
+                </p>
+                <button
+                  onClick={() => navigate('/')}
+                  className="w-full py-4 bg-[#B3261E] text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-[#8C1D18] transition-all"
+                >
+                  Kembali ke Halaman Utama
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <AnimatePresence>
           {showViolationWarning && (
             <motion.div 
