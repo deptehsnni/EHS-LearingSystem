@@ -363,7 +363,7 @@ export const ParticipantFlow: React.FC = () => {
 
   return (
     <Layout title="Induksi Keselamatan Kerja">
-      <div className={`max-w-4xl mx-auto ${examStarted && !examResult ? 'select-none' : ''}`}>
+      <div className={`max-w-4xl mx-auto px-2 sm:px-4 ${examStarted && !examResult ? 'select-none' : ''}`}>
         {/* Anti-Screenshot Overlay */}
         <AnimatePresence>
           {isObscured && (
@@ -418,32 +418,28 @@ export const ParticipantFlow: React.FC = () => {
         </AnimatePresence>
 
         {/* Progress Bar */}
-        <div className="mb-12 relative px-4">
-          {/* Background Line */}
-          <div className="absolute top-5 left-9 right-9 h-[2px] bg-[#E6E1E5]" />
-          
-          {/* Progress Line */}
-          <div 
-            className="absolute top-5 left-9 h-[2px] bg-[#6750A4] transition-all duration-500" 
-            style={{ 
-              width: step === 1 ? '0%' : 
-                     step === 2 ? '33.33%' : 
-                     step === 3 ? '66.66%' : '100%' 
+        <div className="mb-6 sm:mb-12 relative px-2 sm:px-4">
+          <div className="absolute top-4 sm:top-5 left-6 sm:left-9 right-6 sm:right-9 h-[2px] bg-[#E6E1E5]" />
+          <div
+            className="absolute top-4 sm:top-5 left-6 sm:left-9 h-[2px] bg-[#6750A4] transition-all duration-500"
+            style={{
+              width: step === 1 ? '0%' :
+                     step === 2 ? '33.33%' :
+                     step === 3 ? '66.66%' : '100%'
             }}
           />
-
           <div className="flex items-center justify-between relative z-10">
             {[1, 2, 3, 4].map((s) => (
               <div key={s} className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-500 text-sm sm:text-base ${
                   step >= s ? 'bg-[#6750A4] text-white' : 'bg-[#E6E1E5] text-[#49454F]'
                 }`}>
-                  {step > s ? <CheckCircle2 size={20} /> : s}
+                  {step > s ? <CheckCircle2 size={16} /> : s}
                 </div>
-                <span className={`text-[10px] mt-2 font-medium uppercase tracking-wider ${
+                <span className={`text-[9px] sm:text-[10px] mt-1 sm:mt-2 font-medium uppercase tracking-wider ${
                   step >= s ? 'text-[#6750A4]' : 'text-[#49454F]'
                 }`}>
-                  {['Verifikasi', 'Data & Komitmen', 'Ujian', 'Hasil'][s-1]}
+                  {['Verifikasi', 'Data', 'Ujian', 'Hasil'][s-1]}
                 </span>
               </div>
             ))}
@@ -458,23 +454,23 @@ export const ParticipantFlow: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-3xl p-8 shadow-sm border border-[#E6E1E5]"
+              className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-[#E6E1E5]"
             >
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
                 <User className="text-[#6750A4]" /> Konfirmasi Identitas
               </h2>
-              <div className="bg-[#F3F0F5] p-6 rounded-2xl space-y-4 mb-8">
+              <div className="bg-[#F3F0F5] p-4 sm:p-6 rounded-2xl space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 <div className="flex justify-between border-b border-[#E6E1E5] pb-3">
                   <span className="text-[#49454F]">Nama Lengkap</span>
-                  <span className="font-bold text-lg">{participant.nama}</span>
+                  <span className="font-bold text-sm sm:text-lg text-right">{participant.nama}</span>
                 </div>
                 <div className="flex justify-between border-b border-[#E6E1E5] pb-3">
                   <span className="text-[#49454F]">NIK KTP / No. ID Karyawan</span>
-                  <span className="font-mono font-bold text-lg">{participant.nik}</span>
+                  <span className="font-mono font-bold text-sm sm:text-lg">{participant.nik}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#49454F]">Perusahaan</span>
-                  <span className="font-bold text-lg">{participant.perusahaan}</span>
+                  <span className="font-bold text-sm sm:text-lg text-right">{participant.perusahaan}</span>
                 </div>
               </div>
               <p className="text-[#49454F] mb-8 italic">
@@ -498,9 +494,9 @@ export const ParticipantFlow: React.FC = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-3xl p-8 shadow-sm border border-[#E6E1E5]"
+              className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-[#E6E1E5]"
             >
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
                 <FileText className="text-[#6750A4]" /> Data Diri & Komitmen
               </h2>
               
@@ -634,62 +630,59 @@ export const ParticipantFlow: React.FC = () => {
               </div>
 
               {/* Timer & Progress */}
-              <div className="bg-white p-4 rounded-2xl shadow-sm border border-[#E6E1E5] flex flex-col sm:flex-row items-center justify-between sticky top-20 z-40 gap-4">
-                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${timeLeft < 300 ? 'bg-[#F9DEDC] text-[#B3261E]' : 'bg-[#EADDFF] text-[#6750A4]'}`}>
-                      <Clock size={20} />
-                    </div>
-                    <span className={`text-xl font-mono font-bold ${timeLeft < 300 ? 'text-[#B3261E]' : 'text-[#1C1B1F]'}`}>
-                      {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                    </span>
+              <div className="bg-white px-4 py-3 rounded-2xl shadow-sm border border-[#E6E1E5] flex items-center justify-between sticky top-2 sm:top-20 z-40 gap-3">
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-lg ${timeLeft < 300 ? 'bg-[#F9DEDC] text-[#B3261E]' : 'bg-[#EADDFF] text-[#6750A4]'}`}>
+                    <Clock size={16} />
                   </div>
-                  <div className="sm:hidden text-[#49454F] text-xs font-medium">
-                    {Object.keys(answers).length} / {questions.length}
+                  <span className={`text-base sm:text-xl font-mono font-bold ${timeLeft < 300 ? 'text-[#B3261E]' : 'text-[#1C1B1F]'}`}>
+                    {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-1 mx-2">
+                  <div className="flex-1 h-2 bg-[#E6E1E5] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#6750A4] transition-all duration-300"
+                      style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
+                    />
                   </div>
-                </div>
-                <div className="hidden sm:block text-[#49454F] font-medium">
-                  Progress: {Object.keys(answers).length} / {questions.length} Terjawab
-                </div>
-                <div className="w-full sm:w-32 h-2 bg-[#E6E1E5] rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-[#6750A4] transition-all duration-300" 
-                    style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
-                  />
+                  <span className="text-[#49454F] text-xs font-medium whitespace-nowrap">
+                    {Object.keys(answers).length}/{questions.length}
+                  </span>
                 </div>
               </div>
 
               {/* Questions List */}
-              <div className="space-y-8" onCopy={e => e.preventDefault()} onCut={e => e.preventDefault()}>
+              <div className="space-y-4 sm:space-y-8" onCopy={e => e.preventDefault()} onCut={e => e.preventDefault()}>
                 {questions.map((q, index) => (
-                  <div key={q.id} className="bg-white rounded-3xl p-6 md:p-8 shadow-md border border-[#E6E1E5] select-none">
-                    <div className="flex items-start gap-4 mb-6">
-                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#6750A4] text-white flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">
+                  <div key={q.id} className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-md border border-[#E6E1E5] select-none">
+                    <div className="flex items-start gap-3 mb-4 sm:mb-6">
+                      <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-[#6750A4] text-white flex items-center justify-center font-bold flex-shrink-0 text-xs sm:text-base">
                         {index + 1}
                       </div>
-                      <p className="text-lg md:text-xl font-medium text-[#1C1B1F] leading-relaxed">
+                      <p className="text-sm sm:text-xl font-medium text-[#1C1B1F] leading-relaxed pt-0.5">
                         {q.pertanyaan}
                       </p>
                     </div>
-                    <div className="grid grid-cols-1 gap-3 md:gap-4">
+                    <div className="grid grid-cols-1 gap-2 sm:gap-4">
                       {q.shuffledOptions.map((optObj: any) => {
                         const isSelected = answers[q.id] === optObj.label;
                         return (
                           <button
                             key={optObj.label}
                             onClick={() => setAnswers({...answers, [q.id]: optObj.label})}
-                            className={`p-4 md:p-5 rounded-2xl text-left border-2 transition-all flex items-center gap-3 md:gap-4 ${
-                              isSelected 
-                                ? 'border-[#6750A4] bg-[#EADDFF] shadow-sm' 
+                            className={`p-3 sm:p-5 rounded-xl sm:rounded-2xl text-left border-2 transition-all flex items-center gap-2 sm:gap-4 ${
+                              isSelected
+                                ? 'border-[#6750A4] bg-[#EADDFF] shadow-sm'
                                 : 'border-[#E6E1E5] hover:border-[#CAC4D0] bg-white'
                             }`}
                           >
-                            <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${
+                            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 ${
                               isSelected ? 'bg-[#6750A4] text-white' : 'bg-[#F3F0F5] text-[#49454F]'
                             }`}>
                               {optObj.label}
                             </div>
-                            <span className="text-sm md:text-lg">{optObj.text}</span>
+                            <span className="text-xs sm:text-lg leading-snug">{optObj.text}</span>
                           </button>
                         );
                       })}
@@ -699,19 +692,19 @@ export const ParticipantFlow: React.FC = () => {
               </div>
 
               {/* Submit Section */}
-              <div className="pt-12 pb-20 flex flex-col items-center gap-6">
+              <div className="pt-6 pb-10 sm:pt-12 sm:pb-20 flex flex-col items-center gap-4">
                 <div className="w-full h-px bg-[#E6E1E5]" />
-                <button 
+                <button
                   onClick={submitExam}
                   disabled={loading || Object.keys(answers).length < questions.length}
-                  className="w-full max-w-md py-5 md:py-6 rounded-[24px] bg-[#6750A4] text-white font-bold text-xl md:text-2xl shadow-xl hover:bg-[#4F378B] transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full max-w-md py-4 sm:py-6 rounded-[20px] sm:rounded-[24px] bg-[#6750A4] text-white font-bold text-lg sm:text-2xl shadow-xl hover:bg-[#4F378B] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                 >
                   {loading ? 'Mengirim Jawaban...' : 'Selesai & Kirim Jawaban'}
                 </button>
                 {Object.keys(answers).length < questions.length && (
-                  <div className="flex items-center gap-3 text-[#B3261E] bg-[#F9DEDC] px-8 py-4 rounded-2xl font-bold animate-pulse">
-                    <AlertTriangle size={24} />
-                    <span>Harap selesaikan semua soal ({Object.keys(answers).length}/{questions.length})</span>
+                  <div className="flex items-center gap-2 text-[#B3261E] bg-[#F9DEDC] px-4 sm:px-8 py-3 sm:py-4 rounded-2xl font-bold text-xs sm:text-base animate-pulse text-center">
+                    <AlertTriangle size={18} />
+                    <span>Selesaikan semua soal ({Object.keys(answers).length}/{questions.length})</span>
                   </div>
                 )}
               </div>
@@ -724,15 +717,15 @@ export const ParticipantFlow: React.FC = () => {
               key="step4"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-[32px] p-10 shadow-2xl border border-[#E6E1E5] text-center"
+              className="bg-white rounded-[32px] p-6 sm:p-10 shadow-2xl border border-[#E6E1E5] text-center"
             >
-              <div className={`w-24 h-24 rounded-full mx-auto flex items-center justify-center mb-6 ${
+              <div className={`w-16 h-16 sm:w-24 sm:h-24 rounded-full mx-auto flex items-center justify-center mb-4 sm:mb-6 ${
                 examResult.status_lulus ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'
               }`}>
                 {examResult.status_lulus ? <CheckCircle2 size={64} /> : <AlertTriangle size={64} />}
               </div>
               
-              <h2 className="text-3xl font-bold mb-2">
+              <h2 className="text-xl sm:text-3xl font-bold mb-2">
                 {examResult.status_lulus ? 'Selamat, Anda Lulus!' : 'Maaf, Anda Belum Lulus'}
               </h2>
               <p className="text-[#49454F] mb-8">
