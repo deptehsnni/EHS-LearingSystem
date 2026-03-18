@@ -684,14 +684,20 @@ export const AdminDashboard: React.FC = () => {
 
         const { error } = await supabase.from('peserta_master').upsert(formattedData, { onConflict: 'nik' });
         if (error) throw error;
-        alert('Data peserta berhasil diunggah!');
+        const jumlahBerhasil = formattedData.length;
+        alert(`${jumlahBerhasil} data peserta berhasil diunggah/diperbarui!`);
         setShowUploadPesertaModal(false);
         setUploadFile(null);
         setTargetJenisId('');
         fetchData();
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        alert('Gagal mengunggah data. Pastikan format file sesuai template.');
+        const msg = err?.message || '';
+        if (msg.includes('duplicate') || msg.includes('unique')) {
+          alert('Gagal: Terdapat NIK duplikat di file. Gunakan fitur ini untuk update data, pastikan NIK sudah terdaftar, atau hapus baris duplikat dari file Excel.');
+        } else {
+          alert('Gagal mengunggah data. Pastikan format file sesuai template.\n\nDetail: ' + msg);
+        }
       } finally {
         setLoading(false);
       }
@@ -806,20 +812,26 @@ export const AdminDashboard: React.FC = () => {
       return;
     }
 
-    const exportData = filtered.map(r => ({
-      'Waktu Selesai': format(new Date(r.waktu_selesai), 'dd/MM/yyyy HH:mm'),
-      'Jenis Ujian': jenisUjian.find(j => j.id === r.jenis_ujian_id)?.nama || '-',
-      'Nilai': r.nilai,
-      'Nama': r.nama,
-      'NIK': r.nik,
-      'Perusahaan': peserta.find(p => p.nik === r.nik)?.perusahaan || '-',
-      'Status Lulus': r.status_lulus ? 'LULUS' : 'TIDAK LULUS',
-      'Status Perkawinan': r.profil_data.status || '-',
-      'Agama': r.profil_data.agama || '-',
-      'Tanggal Lahir': r.profil_data.tanggalLahir || '-',
-      'Pendidikan': r.profil_data.pendidikan || '-',
-      'Kontak Darurat': r.profil_data.kontakDarurat || '-'
-    }));
+    const exportData = filtered.map(r => {
+      const perusahaan = r.perusahaan || peserta.find(p => p.nik === r.nik)?.perusahaan || '-';
+      return {
+        'Waktu Selesai': format(new Date(r.waktu_selesai), 'dd/MM/yyyy HH:mm'),
+        'Jenis Ujian': jenisUjian.find(j => j.id === r.jenis_ujian_id)?.nama || '-',
+        'Nilai': r.nilai,
+        'Status Lulus': r.status_lulus ? 'LULUS' : 'TIDAK LULUS',
+        'Nama': r.nama,
+        'NIK': r.nik,
+        'Perusahaan': perusahaan,
+        'Status Perkawinan': r.profil_data.status || '-',
+        'Agama': r.profil_data.agama || '-',
+        'Tanggal Lahir': r.profil_data.tanggalLahir || '-',
+        'Pendidikan': r.profil_data.pendidikan || '-',
+        'Kontak Darurat': r.profil_data.kontakDarurat || '-',
+        'Pindah Tab': r.profil_data.tab_violations || 0,
+        'Upaya Screenshot': r.profil_data.screenshot_violations || 0,
+        'Upaya Copy': r.profil_data.copy_violations || 0,
+      };
+    });
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
@@ -842,8 +854,28 @@ export const AdminDashboard: React.FC = () => {
     const totalAttempts = filteredResults.length;
     const totalLulus = filteredResults.filter(r => r.status_lulus).length;
     const lulusRate = totalAttempts > 0 ? Math.round((totalLulus / totalAttempts) * 100) : 0;
+    const avgNilai = totalAttempts > 0 
+      ? Math.round(filteredResults.reduce((sum, r) => sum + r.nilai, 0) / totalAttempts) 
+      : 0;
 
-    return { totalPesertaUjian, totalUjianSistem, lulusRate, totalAttempts };
+    // Trend: bandingkan bulan ini vs bulan lalu
+    const now = new Date();
+    const thisMonth = filteredResults.filter(r => {
+      const d = new Date(r.waktu_selesai);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const lastMonth = filteredResults.filter(r => {
+      const d = new Date(r.waktu_selesai);
+      const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      return d.getMonth() === lm.getMonth() && d.getFullYear() === lm.getFullYear();
+    });
+    const thisMonthLulusRate = thisMonth.length > 0
+      ? Math.round((thisMonth.filter(r => r.status_lulus).length / thisMonth.length) * 100) : 0;
+    const lastMonthLulusRate = lastMonth.length > 0
+      ? Math.round((lastMonth.filter(r => r.status_lulus).length / lastMonth.length) * 100) : 0;
+    const trendLulus = thisMonthLulusRate - lastMonthLulusRate;
+
+    return { totalPesertaUjian, totalUjianSistem, lulusRate, totalAttempts, avgNilai, trendLulus, thisMonthCount: thisMonth.length };
   }, [results, jenisUjian, dashboardFilterJenis]);
 
   const pieData = useMemo(() => {
@@ -910,7 +942,7 @@ export const AdminDashboard: React.FC = () => {
     <div className="min-h-screen bg-[#FDFCFB] flex">
       {/* Sidebar */}
       <aside className={clsx(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#E6E1E5] flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static lg:h-screen",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-[#E6E1E5] flex flex-col transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-screen shadow-xl lg:shadow-none",
         isSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="p-6 flex items-center justify-between border-b border-[#E6E1E5]">
@@ -993,12 +1025,13 @@ export const AdminDashboard: React.FC = () => {
       </aside>
 
       {/* Mobile Overlay */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      <div 
+        className={clsx(
+          "fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300",
+          isSidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        onClick={() => setIsSidebarOpen(false)}
+      />
 
       {/* Main Content */}
       <main className="flex-1 p-4 md:p-8 overflow-y-auto">
@@ -1165,7 +1198,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Metric Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div className="bg-white p-6 rounded-3xl border border-[#E6E1E5] shadow-sm flex flex-col justify-between">
                 <div>
                   <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Total Peserta Ujian</p>
@@ -1207,6 +1240,34 @@ export const AdminDashboard: React.FC = () => {
                 <div className="mt-4 pt-4 border-t border-[#F3F0F5] flex items-center justify-between">
                   <span className="text-[10px] text-[#49454F]">Total Submit</span>
                   <ClipboardCheck size={16} className="text-[#F57F17]" />
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-3xl border border-[#E6E1E5] shadow-sm flex flex-col justify-between">
+                <div>
+                  <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Rata-rata Nilai</p>
+                  <h3 className="text-3xl font-bold">{stats.avgNilai}</h3>
+                </div>
+                <div className="mt-4 pt-4 border-t border-[#F3F0F5] flex items-center justify-between">
+                  <span className="text-[10px] text-[#49454F]">Semua ujian</span>
+                  <BarChart3 size={16} className="text-[#6750A4]" />
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-3xl border border-[#E6E1E5] shadow-sm flex flex-col justify-between">
+                <div>
+                  <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Bulan Ini</p>
+                  <h3 className="text-3xl font-bold">{stats.thisMonthCount}</h3>
+                </div>
+                <div className="mt-4 pt-4 border-t border-[#F3F0F5] flex items-center justify-between">
+                  <span className="text-[10px] text-[#49454F]">Ujian selesai</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    stats.trendLulus > 0 ? 'bg-[#E8F5E9] text-[#2E7D32]' :
+                    stats.trendLulus < 0 ? 'bg-[#F9DEDC] text-[#B3261E]' :
+                    'bg-[#F3F0F5] text-[#49454F]'
+                  }`}>
+                    {stats.trendLulus > 0 ? `+${stats.trendLulus}%` : stats.trendLulus < 0 ? `${stats.trendLulus}%` : '~'} lulus
+                  </span>
                 </div>
               </div>
             </div>
@@ -2893,6 +2954,18 @@ export const AdminDashboard: React.FC = () => {
                   <div>
                     <p className="text-xs text-[#F57F17] font-bold uppercase tracking-wider">Upaya Screenshot</p>
                     <p className="text-2xl font-black text-[#F57F17]">{selectedResultForCheating.profil_data.screenshot_violations || 0} <span className="text-sm font-normal">Kali</span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-[#E8F5E9] rounded-2xl border border-[#A5D6A7]">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-[#2E7D32] text-white flex items-center justify-center shadow-md">
+                    <Copy size={24} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#2E7D32] font-bold uppercase tracking-wider">Upaya Copy Teks</p>
+                    <p className="text-2xl font-black text-[#2E7D32]">{selectedResultForCheating.profil_data.copy_violations || 0} <span className="text-sm font-normal">Kali</span></p>
                   </div>
                 </div>
               </div>
