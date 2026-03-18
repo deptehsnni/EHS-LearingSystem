@@ -130,7 +130,27 @@ export const LandingPage: React.FC = () => {
           }
         }
 
-        // Generate session token & simpan ke Supabase + localStorage
+        // Cek apakah sudah ada sesi aktif di device lain
+        // Skip cek ini jika peserta masuk sebagai remedial (data.is_remedial sudah di-set)
+        if (!data.is_remedial) {
+          const { data: existingSession } = await supabase
+            .from('peserta_sessions')
+            .select('token, last_active')
+            .eq('nik', data.nik)
+            .single();
+
+          if (existingSession) {
+            const lastActive = new Date(existingSession.last_active).getTime();
+            const ageMinutes = (Date.now() - lastActive) / 1000 / 60;
+            if (ageMinutes < 2) {
+              setError('Akun ini sedang digunakan di perangkat lain. Selesaikan sesi tersebut terlebih dahulu.');
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
+        // Tidak ada sesi aktif → buat token baru dan izinkan masuk
         const sessionToken = crypto.randomUUID();
         const { error: sessionError } = await supabase
           .from('peserta_sessions')
@@ -140,10 +160,7 @@ export const LandingPage: React.FC = () => {
             last_active: new Date().toISOString()
           }], { onConflict: 'nik' });
 
-        if (sessionError) {
-          console.error('Gagal simpan session token:', sessionError.message);
-          // Tetap lanjutkan meski session token gagal tersimpan
-        }
+        if (sessionError) console.error('Gagal simpan session token:', sessionError.message);
 
         localStorage.setItem('ehs_participant', JSON.stringify(data));
         localStorage.setItem('ehs_session_token', sessionToken);
