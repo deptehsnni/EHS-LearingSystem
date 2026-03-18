@@ -134,7 +134,8 @@ export const AdminDashboard: React.FC = () => {
     soal_display_count: 20,
     passing_score: 70,
     commitment_title: 'Pakta Integritas',
-    commitment_content: 'Dengan ini saya menyatakan bahwa saya akan mengerjakan ujian ini dengan jujur dan tidak akan melakukan kecurangan dalam bentuk apapun.'
+    commitment_content: 'Dengan ini saya menyatakan bahwa saya akan mengerjakan ujian ini dengan jujur dan tidak akan melakukan kecurangan dalam bentuk apapun.',
+    commitment_checkbox_text: 'Saya telah mengisi data dengan benar dan menyetujui pakta integritas.'
   });
 
   const [showUploadPesertaModal, setShowUploadPesertaModal] = useState(false);
@@ -298,7 +299,8 @@ export const AdminDashboard: React.FC = () => {
         soal_display_count: 20,
         passing_score: 70,
         commitment_title: 'Pakta Integritas',
-        commitment_content: 'Dengan ini saya menyatakan bahwa saya akan mengerjakan ujian ini dengan jujur dan tidak akan melakukan kecurangan dalam bentuk apapun.'
+        commitment_content: 'Dengan ini saya menyatakan bahwa saya akan mengerjakan ujian ini dengan jujur dan tidak akan melakukan kecurangan dalam bentuk apapun.',
+        commitment_checkbox_text: 'Saya telah mengisi data dengan benar dan menyetujui pakta integritas.'
       });
       fetchData();
     } catch (err) {
@@ -432,7 +434,8 @@ export const AdminDashboard: React.FC = () => {
       soal_display_count: jenis.soal_display_count || 20,
       passing_score: jenis.passing_score || 70,
       commitment_title: jenis.commitment_title || 'Pakta Integritas',
-      commitment_content: jenis.commitment_content || 'Dengan ini saya menyatakan bahwa saya akan mengerjakan ujian ini dengan jujur dan tidak akan melakukan kecurangan dalam bentuk apapun.'
+      commitment_content: jenis.commitment_content || 'Dengan ini saya menyatakan bahwa saya akan mengerjakan ujian ini dengan jujur dan tidak akan melakukan kecurangan dalam bentuk apapun.',
+      commitment_checkbox_text: jenis.commitment_checkbox_text || 'Saya telah mengisi data dengan benar dan menyetujui pakta integritas.'
     });
     setShowEditJenisModal(true);
   };
@@ -528,7 +531,8 @@ export const AdminDashboard: React.FC = () => {
           soal_display_count: editingJenis.soal_display_count,
           passing_score: editingJenis.passing_score,
           commitment_title: editingJenis.commitment_title,
-          commitment_content: editingJenis.commitment_content
+          commitment_content: editingJenis.commitment_content,
+          commitment_checkbox_text: editingJenis.commitment_checkbox_text
         })
         .eq('id', editingJenis.id);
       
@@ -2438,6 +2442,15 @@ export const AdminDashboard: React.FC = () => {
                       className="w-full p-3 bg-white border border-[#E6E1E5] rounded-xl focus:ring-2 focus:ring-[#6750A4] text-sm"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#49454F] mb-1 uppercase">Teks Checkbox Persetujuan</label>
+                    <input
+                      type="text"
+                      value={newJenis.commitment_checkbox_text}
+                      onChange={e => setNewJenis({...newJenis, commitment_checkbox_text: e.target.value})}
+                      className="w-full p-3 bg-white border border-[#E6E1E5] rounded-xl focus:ring-2 focus:ring-[#6750A4] text-sm"
+                    />
+                  </div>
                 </div>
               )}
               <div className="flex items-center justify-between p-4 bg-[#F3F0F5] rounded-2xl">
@@ -2591,6 +2604,15 @@ export const AdminDashboard: React.FC = () => {
                       value={editingJenis.commitment_content}
                       onChange={e => setEditingJenis({...editingJenis, commitment_content: e.target.value})}
                       rows={3}
+                      className="w-full p-3 bg-white border border-[#E6E1E5] rounded-xl focus:ring-2 focus:ring-[#6750A4] text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-[#49454F] mb-1 uppercase">Teks Checkbox Persetujuan</label>
+                    <input
+                      type="text"
+                      value={editingJenis.commitment_checkbox_text || ''}
+                      onChange={e => setEditingJenis({...editingJenis, commitment_checkbox_text: e.target.value})}
                       className="w-full p-3 bg-white border border-[#E6E1E5] rounded-xl focus:ring-2 focus:ring-[#6750A4] text-sm"
                     />
                   </div>
