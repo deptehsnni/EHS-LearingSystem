@@ -64,14 +64,15 @@ export const LandingPage: React.FC = () => {
         const examId = preferredExamId || data.allowed_jenis_id;
 
         if (examId) {
-          const { data: jenisData } = await supabase
+          const { data: jenisData, error: jenisError } = await supabase
             .from('jenis_ujian')
             .select('*')
             .eq('id', examId)
             .single();
 
           // Cek apakah ujian sedang aktif
-          if (jenisData && !jenisData.is_active) {
+          // Hanya blokir jika jenisData berhasil difetch DAN is_active jelas false
+          if (jenisData && jenisError === null && jenisData.is_active === false) {
             setInactiveExamName(jenisData.nama || 'Ujian');
             setShowInactiveModal(true);
             setLoading(false);
