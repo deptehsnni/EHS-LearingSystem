@@ -952,7 +952,7 @@ export const AdminDashboard: React.FC = () => {
       ? results 
       : results.filter(r => r.jenis_ujian_id === dashboardFilterJenis);
 
-    const totalPesertaUjian = new Set(filteredResults.map(r => r.nik)).size;
+    const totalPesertaUjian = filteredResults.length;
     const totalUjianSistem = jenisUjian.length;
     const totalAttempts = filteredResults.length;
     const totalLulus = filteredResults.filter(r => r.status_lulus).length;
@@ -1304,11 +1304,11 @@ export const AdminDashboard: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div className="bg-white p-6 rounded-3xl border border-[#E6E1E5] shadow-sm flex flex-col justify-between">
                 <div>
-                  <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Total Peserta Ujian</p>
+                  <p className="text-[#49454F] text-xs font-bold uppercase tracking-wider mb-1">Total Ujian Selesai</p>
                   <h3 className="text-3xl font-bold">{stats.totalPesertaUjian}</h3>
                 </div>
                 <div className="mt-4 pt-4 border-t border-[#F3F0F5] flex items-center justify-between">
-                  <span className="text-[10px] text-[#49454F]">Peserta Ujian</span>
+                  <span className="text-[10px] text-[#49454F]">Jumlah Attempt</span>
                   <Users size={16} className="text-[#6750A4]" />
                 </div>
               </div>
@@ -2028,6 +2028,7 @@ export const AdminDashboard: React.FC = () => {
                         <tr key={r.id} className="hover:bg-[#FDFCFB] transition-colors">
                           <td className="px-4 md:px-6 py-4">
                             <p className="font-bold text-[#1C1B1F] text-xs md:text-sm">{r.nama}</p>
+                            <p className="text-[10px] text-[#49454F] mt-0.5">{format(new Date(r.waktu_selesai), 'dd MMM yyyy, HH:mm', { locale: id })}</p>
                           </td>
                           <td className="px-4 md:px-6 py-4">
                             <p className="text-[10px] text-[#49454F] font-mono">{r.nik}</p>
