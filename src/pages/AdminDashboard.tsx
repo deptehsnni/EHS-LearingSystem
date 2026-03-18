@@ -71,6 +71,9 @@ export const AdminDashboard: React.FC = () => {
   // Dashboard filters
   const [dashboardFilterJenis, setDashboardFilterJenis] = useState<string | 'all'>('all');
   const [showDashboardSettings, setShowDashboardSettings] = useState(false);
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+  const [resetPasswordInput, setResetPasswordInput] = useState('');
+  const [resetPasswordError, setResetPasswordError] = useState('');
   const [dashboardConfig, setDashboardConfig] = useState({
     showPieChart: true,
     showBarChartMonth: true,
@@ -440,23 +443,34 @@ export const AdminDashboard: React.FC = () => {
     setShowEditJenisModal(true);
   };
 
-  const handleResetData = async () => {
-    if (!confirm('PERINGATAN: Seluruh data (Peserta, Hasil Ujian, Soal, Jenis Ujian) akan dihapus secara permanen. Lanjutkan?')) {
+  const handleResetData = () => {
+    setResetPasswordInput('');
+    setResetPasswordError('');
+    setShowResetConfirmModal(true);
+  };
+
+  const handleConfirmReset = async () => {
+    // Verifikasi password admin
+    const { data: adminData } = await supabase
+      .from('users_admin')
+      .select('password_hash')
+      .eq('id', admin?.id)
+      .single();
+
+    if (!adminData || adminData.password_hash !== resetPasswordInput) {
+      setResetPasswordError('Password salah. Reset dibatalkan.');
       return;
     }
-    
+
+    setShowResetConfirmModal(false);
     setLoading(true);
     try {
-      // Order matters for foreign keys
       await supabase.from('remedial_requests').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('hasil_ujian').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('soal').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('jenis_ujian').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       await supabase.from('peserta_master').delete().neq('nik', '0');
-      
-      // Reset stats
       await supabase.from('persistent_stats').update({ count: 0 }).neq('id', '');
-      
       alert('Seluruh data berhasil direset.');
       fetchData();
       setShowDashboardSettings(false);
@@ -3008,6 +3022,51 @@ export const AdminDashboard: React.FC = () => {
                 className="px-8 py-3 rounded-xl bg-[#6750A4] text-white font-bold shadow-md hover:bg-[#4F378B] transition-all"
               >
                 Tutup
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+      {showResetConfirmModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl border-2 border-[#B3261E]"
+          >
+            <div className="w-16 h-16 bg-[#F9DEDC] text-[#B3261E] rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle size={36} />
+            </div>
+            <h3 className="text-xl font-bold text-center text-[#B3261E] mb-2">Konfirmasi Reset Data</h3>
+            <p className="text-sm text-[#49454F] text-center mb-6">
+              Tindakan ini akan menghapus <span className="font-bold text-[#1C1B1F]">seluruh data</span> secara permanen dan tidak dapat dibatalkan. Masukkan password Anda untuk konfirmasi.
+            </p>
+            <div className="mb-4">
+              <input
+                type="password"
+                value={resetPasswordInput}
+                onChange={e => { setResetPasswordInput(e.target.value); setResetPasswordError(''); }}
+                placeholder="Masukkan password Anda"
+                className="w-full p-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#B3261E] text-sm"
+                autoFocus
+              />
+              {resetPasswordError && (
+                <p className="text-[#B3261E] text-xs mt-2 font-medium">{resetPasswordError}</p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowResetConfirmModal(false); setResetPasswordInput(''); setResetPasswordError(''); }}
+                className="flex-1 py-3 rounded-xl border border-[#E6E1E5] font-bold text-sm text-[#49454F] hover:bg-[#F3F0F5]"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleConfirmReset}
+                disabled={!resetPasswordInput || loading}
+                className="flex-1 py-3 rounded-xl bg-[#B3261E] text-white font-bold text-sm shadow-md hover:bg-[#8C1D18] disabled:opacity-50"
+              >
+                {loading ? 'Mereset...' : 'Reset Sekarang'}
               </button>
             </div>
           </motion.div>
