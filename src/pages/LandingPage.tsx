@@ -129,8 +129,16 @@ export const LandingPage: React.FC = () => {
           }
         }
 
-        // Store participant session in localStorage for simplicity in this demo
+        // Generate session token & simpan ke Supabase + localStorage
+        const sessionToken = crypto.randomUUID();
+        await supabase.from('peserta_sessions').upsert([{
+          nik: data.nik,
+          token: sessionToken,
+          last_active: new Date().toISOString()
+        }], { onConflict: 'nik' });
+
         localStorage.setItem('ehs_participant', JSON.stringify(data));
+        localStorage.setItem('ehs_session_token', sessionToken);
         navigate('/induction');
       }
     } catch (err) {
