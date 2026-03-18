@@ -401,7 +401,7 @@ export const LandingPage: React.FC = () => {
                       Memverifikasi...
                     </>
                   ) : (
-                    <>Mulai Induksi <ChevronRight size={18} /></>
+                    <>Mulai Ujian <ChevronRight size={18} /></>
                   )}
                 </button>
               </form>
