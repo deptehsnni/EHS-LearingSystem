@@ -50,7 +50,24 @@ export const ParticipantFlow: React.FC = () => {
       navigate('/');
       return;
     }
-    setParticipant(JSON.parse(stored));
+    const p = JSON.parse(stored);
+    setParticipant(p);
+
+    // Fetch jenis ujian lebih awal agar commitment_content tampil di step 2
+    const examId = localStorage.getItem('preferred_exam') || p.allowed_jenis_id;
+    if (examId) {
+      supabase
+        .from('jenis_ujian')
+        .select('*')
+        .eq('id', examId)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setCurrentJenis(data);
+            setTimeLeft(Math.abs(data.timer_minutes) * 60);
+          }
+        });
+    }
   }, [navigate]);
 
   // Timer effect
