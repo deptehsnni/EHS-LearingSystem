@@ -640,6 +640,21 @@ export const ParticipantFlow: React.FC = () => {
               <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
                 <User className="text-[#6750A4]" /> Konfirmasi Identitas
               </h2>
+
+              {/* Jenis Ujian - informasi utama */}
+              {currentJenis && (
+                <div className="bg-[#6750A4] rounded-2xl p-4 mb-4 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <ClipboardCheck size={20} className="text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/70 text-xs uppercase tracking-wider font-semibold">Jenis Ujian</p>
+                    <p className="text-white font-black text-base sm:text-lg leading-tight truncate">{currentJenis.nama}</p>
+                    <p className="text-white/70 text-xs mt-0.5">{Math.abs(currentJenis.timer_minutes)} menit · Skor lulus: {currentJenis.passing_score || 70}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-[#F3F0F5] p-4 sm:p-6 rounded-2xl space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 <div className="flex justify-between border-b border-[#E6E1E5] pb-3">
                   <span className="text-[#49454F]">Nama Lengkap</span>
