@@ -132,11 +132,18 @@ export const LandingPage: React.FC = () => {
 
         // Generate session token & simpan ke Supabase + localStorage
         const sessionToken = crypto.randomUUID();
-        await supabase.from('peserta_sessions').upsert([{
-          nik: data.nik,
-          token: sessionToken,
-          last_active: new Date().toISOString()
-        }], { onConflict: 'nik' });
+        const { error: sessionError } = await supabase
+          .from('peserta_sessions')
+          .upsert([{
+            nik: data.nik,
+            token: sessionToken,
+            last_active: new Date().toISOString()
+          }], { onConflict: 'nik' });
+
+        if (sessionError) {
+          console.error('Gagal simpan session token:', sessionError.message);
+          // Tetap lanjutkan meski session token gagal tersimpan
+        }
 
         localStorage.setItem('ehs_participant', JSON.stringify(data));
         localStorage.setItem('ehs_session_token', sessionToken);
