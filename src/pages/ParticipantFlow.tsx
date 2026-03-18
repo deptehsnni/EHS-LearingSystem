@@ -38,8 +38,9 @@ export const ParticipantFlow: React.FC = () => {
   const [tabViolations, setTabViolations] = useState(0);
   const [screenshotViolations, setScreenshotViolations] = useState(0);
   const [showViolationWarning, setShowViolationWarning] = useState(false);
-  const [violationType, setViolationType] = useState<'tab' | 'screenshot'>('tab');
+  const [violationType, setViolationType] = useState<'tab' | 'screenshot' | 'copy'>('tab');
   const [isObscured, setIsObscured] = useState(false);
+  const [copyViolations, setCopyViolations] = useState(0);
 
   const navigate = useNavigate();
 
@@ -117,16 +118,38 @@ export const ParticipantFlow: React.FC = () => {
         return false;
       };
 
+      const handleCopy = (e: ClipboardEvent) => {
+        e.preventDefault();
+        setCopyViolations(v => v + 1);
+        setViolationType('copy');
+        setShowViolationWarning(true);
+      };
+
+      const handleCut = (e: ClipboardEvent) => {
+        e.preventDefault();
+        setCopyViolations(v => v + 1);
+      };
+
+      const handlePaste = (e: ClipboardEvent) => {
+        e.preventDefault();
+      };
+
       document.addEventListener('visibilitychange', handleVisibilityChange);
       window.addEventListener('blur', handleBlur);
       window.addEventListener('keydown', handleKeyDown);
       window.addEventListener('contextmenu', handleContextMenu);
+      document.addEventListener('copy', handleCopy);
+      document.addEventListener('cut', handleCut);
+      document.addEventListener('paste', handlePaste);
 
       return () => {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
         window.removeEventListener('blur', handleBlur);
         window.removeEventListener('keydown', handleKeyDown);
         window.removeEventListener('contextmenu', handleContextMenu);
+        document.removeEventListener('copy', handleCopy);
+        document.removeEventListener('cut', handleCut);
+        document.removeEventListener('paste', handlePaste);
       };
     }
   }, [examStarted, examResult]);
@@ -246,9 +269,10 @@ export const ParticipantFlow: React.FC = () => {
         ...profileData, 
         tab_violations: tabViolations,
         screenshot_violations: screenshotViolations,
+        copy_violations: copyViolations,
         is_remedial: participant?.is_remedial || false
       },
-      jenis_ujian_id: participant?.allowed_jenis_id,
+      jenis_ujian_id: currentJenis?.id || participant?.allowed_jenis_id,
       waktu_selesai: new Date().toISOString()
     };
 
@@ -277,7 +301,7 @@ export const ParticipantFlow: React.FC = () => {
 
   const handleRequestRemedial = async (specificExamId?: string) => {
     if (!participant) return;
-    const examId = specificExamId || (questions.length > 0 ? questions[0].jenis_ujian_id : null);
+    const examId = specificExamId || currentJenis?.id || (questions.length > 0 ? questions[0].jenis_ujian_id : null);
     
     if (!examId) {
       alert('Data ujian tidak ditemukan.');
@@ -355,6 +379,8 @@ export const ParticipantFlow: React.FC = () => {
                 <p className="text-[#49454F] mb-8 text-lg">
                   {violationType === 'tab' 
                     ? 'Anda terdeteksi berpindah tab atau meninggalkan layar ujian. Tindakan ini dicatat sebagai upaya kecurangan.' 
+                    : violationType === 'copy'
+                    ? 'Dilarang menyalin (copy) teks soal! Tindakan ini melanggar peraturan integritas ujian dan telah dicatat.'
                     : 'Dilarang melakukan screenshot atau menyalin konten ujian! Tindakan ini melanggar peraturan keamanan.'}
                 </p>
                 <button 
@@ -609,9 +635,9 @@ export const ParticipantFlow: React.FC = () => {
               </div>
 
               {/* Questions List */}
-              <div className="space-y-8">
+              <div className="space-y-8" onCopy={e => e.preventDefault()} onCut={e => e.preventDefault()}>
                 {questions.map((q, index) => (
-                  <div key={q.id} className="bg-white rounded-3xl p-6 md:p-8 shadow-md border border-[#E6E1E5]">
+                  <div key={q.id} className="bg-white rounded-3xl p-6 md:p-8 shadow-md border border-[#E6E1E5] select-none">
                     <div className="flex items-start gap-4 mb-6">
                       <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#6750A4] text-white flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">
                         {index + 1}
@@ -714,6 +740,10 @@ export const ParticipantFlow: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-[#49454F] text-sm">Upaya Screenshot:</span>
                     <span className="font-bold text-[#B3261E]">{examResult.profil_data.screenshot_violations || 0} kali</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#49454F] text-sm">Upaya Copy Teks:</span>
+                    <span className="font-bold text-[#B3261E]">{examResult.profil_data.copy_violations || 0} kali</span>
                   </div>
                 </div>
               </div>
