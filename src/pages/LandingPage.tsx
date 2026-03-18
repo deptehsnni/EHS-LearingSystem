@@ -11,6 +11,8 @@ export const LandingPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showRemedialModal, setShowRemedialModal] = useState(false);
   const [remedialData, setRemedialData] = useState<{nik: string, nama: string, perusahaan: string, examId: string} | null>(null);
+  const [showInactiveModal, setShowInactiveModal] = useState(false);
+  const [inactiveExamName, setInactiveExamName] = useState('');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -48,6 +50,14 @@ export const LandingPage: React.FC = () => {
             .select('*')
             .eq('id', examId)
             .single();
+
+          // Cek apakah ujian sedang aktif
+          if (jenisData && !jenisData.is_active) {
+            setInactiveExamName(jenisData.nama || 'Ujian');
+            setShowInactiveModal(true);
+            setLoading(false);
+            return;
+          }
 
           const isLimitEnabled = jenisData && (jenisData.limit_one_per_day === true || jenisData.timer_minutes < 0);
           if (isLimitEnabled) {
@@ -149,6 +159,41 @@ export const LandingPage: React.FC = () => {
   return (
     <Layout showNav={false}>
       <div className="max-w-md mx-auto mt-12 sm:mt-20">
+        {/* Inactive Exam Modal */}
+        <AnimatePresence>
+          {showInactiveModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#E6E1E5]"
+              >
+                <div className="w-20 h-20 bg-[#F9DEDC] text-[#B3261E] rounded-full flex items-center justify-center mx-auto mb-6">
+                  <AlertTriangle size={48} />
+                </div>
+                <h3 className="text-2xl font-bold text-[#1C1B1F] text-center mb-4">Sesi Ujian Belum Dibuka</h3>
+                <p className="text-[#49454F] mb-2 text-center">
+                  Ujian <span className="font-bold text-[#1C1B1F]">{inactiveExamName}</span> saat ini belum aktif.
+                </p>
+                <p className="text-[#49454F] mb-8 text-center text-sm">
+                  Silakan hubungi Admin untuk membuka sesi ujian, atau coba lagi nanti.
+                </p>
+                <button
+                  onClick={() => setShowInactiveModal(false)}
+                  className="w-full py-4 bg-[#B3261E] text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-[#8C1D18] transition-all"
+                >
+                  Tutup
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Remedial Request Modal */}
         <AnimatePresence>
           {showRemedialModal && (
