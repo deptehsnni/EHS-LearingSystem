@@ -88,6 +88,24 @@ export const ParticipantFlow: React.FC = () => {
     const p = JSON.parse(stored);
     setParticipant(p);
 
+    // Cek session token langsung saat halaman dibuka
+    const localToken = localStorage.getItem('ehs_session_token');
+    if (localToken) {
+      supabase
+        .from('peserta_sessions')
+        .select('token')
+        .eq('nik', p.nik)
+        .single()
+        .then(({ data }) => {
+          if (data && data.token !== localToken) {
+            // Token tidak cocok — ada device lain yang login
+            setKickedByOtherDevice(true);
+            localStorage.removeItem('ehs_session_token');
+            localStorage.removeItem('ehs_participant');
+          }
+        });
+    }
+
     // Fetch jenis ujian lebih awal agar commitment_content tampil di step 2
     const examId = localStorage.getItem('preferred_exam') || p.allowed_jenis_id;
     if (examId) {
@@ -161,7 +179,7 @@ export const ParticipantFlow: React.FC = () => {
     };
 
     checkSession();
-    const interval = setInterval(checkSession, 30000);
+    const interval = setInterval(checkSession, 10000);
     return () => clearInterval(interval);
   }, [examStarted, examResult, currentJenis, participant]);
 
