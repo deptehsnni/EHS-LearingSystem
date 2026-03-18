@@ -88,22 +88,15 @@ export const ParticipantFlow: React.FC = () => {
     const p = JSON.parse(stored);
     setParticipant(p);
 
-    // Cek session token langsung saat halaman dibuka
+    // Update last_active segera saat halaman dibuka agar sesi dianggap aktif
     const localToken = localStorage.getItem('ehs_session_token');
     if (localToken) {
       supabase
         .from('peserta_sessions')
-        .select('token')
+        .update({ last_active: new Date().toISOString() })
         .eq('nik', p.nik)
-        .single()
-        .then(({ data }) => {
-          if (data && data.token !== localToken) {
-            // Token tidak cocok — ada device lain yang login
-            setKickedByOtherDevice(true);
-            localStorage.removeItem('ehs_session_token');
-            localStorage.removeItem('ehs_participant');
-          }
-        });
+        .eq('token', localToken)
+        .then(() => {});
     }
 
     // Fetch jenis ujian lebih awal agar commitment_content tampil di step 2
@@ -148,33 +141,30 @@ export const ParticipantFlow: React.FC = () => {
     const localToken = localStorage.getItem('ehs_session_token');
 
     const checkSession = async () => {
-      // Cek is_active dan token sekaligus dalam 1 roundtrip
-      const [jenisRes, sessionRes] = await Promise.all([
-        supabase.from('jenis_ujian').select('is_active').eq('id', currentJenis.id).single(),
-        localToken
-          ? supabase.from('peserta_sessions').select('token').eq('nik', participant?.nik || '').single()
-          : Promise.resolve({ data: null })
-      ]);
+      try {
+        // Cek is_active ujian
+        const { data: jenisRes } = await supabase
+          .from('jenis_ujian')
+          .select('is_active')
+          .eq('id', currentJenis.id)
+          .single();
 
-      // Cek sesi ujian masih aktif
-      if (jenisRes.data && !jenisRes.data.is_active) {
-        setSessionInactive(true);
-        return;
-      }
+        if (jenisRes && !jenisRes.is_active) {
+          setSessionInactive(true);
+          return;
+        }
 
-      // Cek token masih valid (tidak login di device lain)
-      if (localToken && sessionRes.data && sessionRes.data.token !== localToken) {
-        setKickedByOtherDevice(true);
-        localStorage.removeItem('ehs_session_token');
-        localStorage.removeItem('ehs_participant');
-        return;
-      }
-
-      // Update last_active agar device lain tahu sesi ini masih hidup
-      if (localToken) {
-        await supabase.from('peserta_sessions')
-          .update({ last_active: new Date().toISOString() })
-          .eq('nik', participant?.nik || '');
+        // Update last_active agar device lain tidak bisa login
+        if (localToken && participant?.nik) {
+          await supabase
+            .from('peserta_sessions')
+            .update({ last_active: new Date().toISOString() })
+            .eq('nik', participant.nik)
+            .eq('token', localToken);
+        }
+      } catch (err) {
+        // Abaikan error network sementara, jangan crash polling
+        console.error('Session check error:', err);
       }
     };
 
@@ -371,6 +361,13 @@ export const ParticipantFlow: React.FC = () => {
   };
 
   const submitExam = async () => {
+    // Validasi semua soal sudah dijawab
+    const unanswered = questions.filter(q => !answers[q.id]);
+    if (unanswered.length > 0) {
+      const confirm = window.confirm(`Masih ada ${unanswered.length} soal yang belum dijawab. Yakin ingin mengirimkan jawaban sekarang?`);
+      if (!confirm) return;
+    }
+
     // Cek sesi masih aktif sebelum submit
     if (currentJenis) {
       const { data: jenisCheck } = await supabase
