@@ -554,18 +554,21 @@ export const ParticipantFlow: React.FC = () => {
               </h3>
               <div className="prose prose-sm max-w-none bg-[#FDFCFB] p-6 rounded-2xl border border-[#E6E1E5] mb-8">
                 <div className="whitespace-pre-wrap text-[#49454F]">
-                  {currentJenis?.commitment_content || (
-                    <>
-                      <p>Saya yang bertanda tangan di bawah ini menyatakan berkomitmen untuk:</p>
-                      <ul className="list-disc pl-5 space-y-2">
-                        <li>Mematuhi seluruh peraturan K3LH yang berlaku di area kerja.</li>
-                        <li>Menggunakan Alat Pelindung Diri (APD) yang dipersyaratkan secara benar.</li>
-                        <li>Melaporkan setiap kondisi tidak aman (Unsafe Condition) dan tindakan tidak aman (Unsafe Action).</li>
-                        <li>Menjaga kebersihan dan kerapihan area kerja (5S/5R).</li>
-                        <li>Tidak melakukan tindakan yang membahayakan diri sendiri maupun orang lain.</li>
-                      </ul>
-                    </>
-                  )}
+                  {currentJenis?.commitment_content
+                    ? currentJenis.commitment_content
+                    : (
+                      <>
+                        <p>Saya yang bertanda tangan di bawah ini menyatakan berkomitmen untuk:</p>
+                        <ul className="list-disc pl-5 space-y-2">
+                          <li>Mematuhi seluruh peraturan K3LH yang berlaku di area kerja.</li>
+                          <li>Menggunakan Alat Pelindung Diri (APD) yang dipersyaratkan secara benar.</li>
+                          <li>Melaporkan setiap kondisi tidak aman (Unsafe Condition) dan tindakan tidak aman (Unsafe Action).</li>
+                          <li>Menjaga kebersihan dan kerapihan area kerja (5S/5R).</li>
+                          <li>Tidak melakukan tindakan yang membahayakan diri sendiri maupun orang lain.</li>
+                        </ul>
+                      </>
+                    )
+                  }
                 </div>
               </div>
 
@@ -576,7 +579,9 @@ export const ParticipantFlow: React.FC = () => {
                   onChange={(e) => setCommitmentAccepted(e.target.checked)}
                   className="w-6 h-6 rounded border-[#6750A4] text-[#6750A4] focus:ring-[#6750A4]"
                 />
-                <span className="font-medium text-[#1C1B1F]">Saya telah mengisi data dengan benar dan menyetujui pakta integritas.</span>
+                <span className="font-medium text-[#1C1B1F]">
+                  {currentJenis?.commitment_checkbox_text || 'Saya telah mengisi data dengan benar dan menyetujui pakta integritas.'}
+                </span>
               </label>
 
               <div className="flex gap-4">
