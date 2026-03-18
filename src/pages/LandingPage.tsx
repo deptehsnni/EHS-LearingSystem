@@ -43,28 +43,20 @@ export const LandingPage: React.FC = () => {
         const examId = preferredExamId || data.allowed_jenis_id;
 
         if (examId) {
-          const { data: jenisData, error: jenisError } = await supabase
+          const { data: jenisData } = await supabase
             .from('jenis_ujian')
             .select('*')
             .eq('id', examId)
             .single();
 
-          console.log('[DEBUG] examId:', examId);
-          console.log('[DEBUG] jenisData:', jenisData);
-          console.log('[DEBUG] jenisError:', jenisError);
-          console.log('[DEBUG] limit_one_per_day:', jenisData?.limit_one_per_day);
-          console.log('[DEBUG] timer_minutes:', jenisData?.timer_minutes);
-
           const isLimitEnabled = jenisData && (jenisData.limit_one_per_day === true || jenisData.timer_minutes < 0);
-          console.log('[DEBUG] isLimitEnabled:', isLimitEnabled);
-
           if (isLimitEnabled) {
+            // Hitung awal hari WIB (UTC+7)
             const now = new Date();
             const offsetMs = 7 * 60 * 60 * 1000;
             const wibNow = new Date(now.getTime() + offsetMs);
             wibNow.setUTCHours(0, 0, 0, 0);
             const todayStart = new Date(wibNow.getTime() - offsetMs).toISOString();
-            console.log('[DEBUG] todayStart:', todayStart);
 
             const { data: previousAttempts, error: attemptsError } = await supabase
               .from('hasil_ujian')
@@ -73,29 +65,34 @@ export const LandingPage: React.FC = () => {
               .eq('jenis_ujian_id', examId)
               .gte('waktu_selesai', todayStart);
 
-            console.log('[DEBUG] previousAttempts:', previousAttempts);
-            console.log('[DEBUG] attemptsError:', attemptsError);
+            if (attemptsError) console.error('Cek attempts error:', attemptsError.message);
 
             if (previousAttempts && previousAttempts.length > 0) {
-              const { data: approvedRemedial, error: remError } = await supabase
+              // Ambil remedial approved yang belum dipakai (status 'approved', bukan 'used')
+              const { data: approvedRemedial } = await supabase
                 .from('remedial_requests')
                 .select('id')
                 .eq('nik', nik)
                 .eq('jenis_ujian_id', examId)
-                .eq('status', 'approved')
-                .gte('created_at', todayStart);
+                .eq('status', 'approved');
 
-              console.log('[DEBUG] approvedRemedial:', approvedRemedial);
-              console.log('[DEBUG] remError:', remError);
+              const availableSlot = approvedRemedial?.length || 0;
 
-              const approvedCount = approvedRemedial?.length || 0;
-              console.log('[DEBUG] approvedCount:', approvedCount, '| attempts:', previousAttempts.length);
-
-              if (previousAttempts.length >= 1 + approvedCount) {
+              // Total slot = 1 (ujian awal) + jumlah approved yang belum dipakai
+              if (previousAttempts.length >= 1 + availableSlot) {
+                // Tidak ada slot tersisa → tampilkan modal
                 setRemedialData({ nik: data.nik, nama: data.nama, perusahaan: data.perusahaan, examId });
                 setShowRemedialModal(true);
                 setLoading(false);
                 return;
+              }
+
+              // Ada slot remedial → tandai 1 slot sebagai 'used' lalu izinkan masuk
+              if (approvedRemedial && approvedRemedial.length > 0) {
+                await supabase
+                  .from('remedial_requests')
+                  .update({ status: 'used' })
+                  .eq('id', approvedRemedial[0].id);
               }
               data.is_remedial = true;
             }
