@@ -12,6 +12,10 @@ export const LandingPage: React.FC = () => {
   const [remedialData, setRemedialData] = useState<{nik: string, nama: string, perusahaan: string, examId: string} | null>(null);
   const [showInactiveModal, setShowInactiveModal] = useState(false);
   const [inactiveExamName, setInactiveExamName] = useState('');
+  const [landingConfig, setLandingConfig] = useState({
+    judul: 'Induksi & Keselamatan Kerja',
+    deskripsi: 'Platform ujian induksi keselamatan kerja profesional. Pastikan setiap pekerja memahami standar K3 sebelum memasuki area kerja.'
+  });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -21,6 +25,22 @@ export const LandingPage: React.FC = () => {
       localStorage.setItem('preferred_exam', examId);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    supabase
+      .from('landing_config')
+      .select('*')
+      .eq('id', 'main')
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          setLandingConfig({
+            judul: data.judul || 'Induksi & Keselamatan Kerja',
+            deskripsi: data.deskripsi || 'Platform ujian induksi keselamatan kerja profesional. Pastikan setiap pekerja memahami standar K3 sebelum memasuki area kerja.'
+          });
+        }
+      });
+  }, []);
 
   const handleParticipantLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,8 +240,8 @@ export const LandingPage: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <div className="relative flex-1 flex flex-col lg:flex-row">
-        {/* Left panel - Branding */}
+      <div className="relative flex-1 flex flex-col-reverse lg:flex-row">
+        {/* Left panel - Branding (tampil di bawah di mobile) */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -243,13 +263,18 @@ export const LandingPage: React.FC = () => {
                 <div className="w-1.5 h-1.5 rounded-full bg-[#E6A620] animate-pulse" />
                 <span className="text-[#E6A620] text-xs font-semibold uppercase tracking-wider">Sistem Aktif</span>
               </div>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight mb-6">
-                Induksi &<br />
-                <span className="text-[#E6A620]">Keselamatan</span><br />
-                Kerja
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight mb-6 whitespace-pre-line">
+                {landingConfig.judul.includes('&') ? (
+                  <>
+                    {landingConfig.judul.split('&')[0].trim()} &<br />
+                    <span className="text-[#E6A620]">{landingConfig.judul.split('&')[1]?.trim()}</span>
+                  </>
+                ) : (
+                  <span className="text-[#E6A620]">{landingConfig.judul}</span>
+                )}
               </h1>
               <p className="text-[#6B7280] text-base md:text-lg leading-relaxed max-w-md">
-                Platform ujian induksi keselamatan kerja profesional. Pastikan setiap pekerja memahami standar K3 sebelum memasuki area kerja.
+                {landingConfig.deskripsi}
               </p>
             </motion.div>
 
@@ -274,12 +299,12 @@ export const LandingPage: React.FC = () => {
             </motion.div>
           </div>
 
-          <div className="mt-auto pt-8">
+          <div className="mt-auto pt-8 hidden lg:block">
             <p className="text-[#374151] text-xs">© {new Date().getFullYear()} EHS Learning System</p>
           </div>
         </motion.div>
 
-        {/* Right panel - Login form */}
+        {/* Right panel - Login form (tampil di atas di mobile) */}
         <div className="lg:w-1/2 flex items-center justify-center p-6 md:p-12 lg:p-16">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -287,6 +312,12 @@ export const LandingPage: React.FC = () => {
             transition={{ delay: 0.3, duration: 0.5 }}
             className="w-full max-w-md"
           >
+            {/* Logo hanya tampil di mobile */}
+            <div className="flex items-center gap-3 mb-6 lg:hidden">
+              <img src="/logo.svg" alt="Logo" className="w-8 h-8 object-contain" referrerPolicy="no-referrer" />
+              <span className="text-[#E6A620] font-bold tracking-wide text-sm uppercase">EHS Learning System</span>
+            </div>
+
             <div className="bg-[#161616] border border-white/10 rounded-3xl p-8 md:p-10 shadow-2xl">
               <div className="mb-8">
                 <h2 className="text-2xl font-bold text-white mb-1">Masuk ke Sistem</h2>
@@ -350,6 +381,8 @@ export const LandingPage: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            <p className="text-[#374151] text-xs text-center mt-6 lg:hidden">© {new Date().getFullYear()} EHS Learning System</p>
           </motion.div>
         </div>
       </div>
