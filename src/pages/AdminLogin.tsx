@@ -60,12 +60,12 @@ export const AdminLogin: React.FC = () => {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="lg:w-1/2 flex flex-col items-center p-8 md:p-12 lg:p-16 lg:min-h-screen"
+          className="lg:w-1/2 flex flex-col justify-between p-8 md:p-12 lg:p-16 lg:min-h-screen"
         >
-          {/* Branding - center top desktop */}
-          <div className="flex flex-col items-center text-center mb-8">
-            <img src="/logo.svg" alt="Logo" className="w-24 h-24 lg:w-28 lg:h-28 object-contain mb-3" referrerPolicy="no-referrer" />
-            <p className="text-[#E6A620] font-black tracking-wide text-2xl lg:text-3xl leading-tight">EHS Learning System</p>
+          {/* Branding - kiri di desktop */}
+          <div className="flex items-center gap-4 mb-auto">
+            <img src="/logo.svg" alt="Logo" className="w-14 h-14 lg:w-20 lg:h-20 object-contain" referrerPolicy="no-referrer" />
+            <p className="text-[#E6A620] font-black tracking-wide text-xl lg:text-2xl leading-tight">EHS Learning System</p>
           </div>
 
           <div className="py-8 lg:py-0 w-full">
@@ -99,7 +99,7 @@ export const AdminLogin: React.FC = () => {
             </motion.div>
           </div>
 
-          <div className="mt-auto pt-8 hidden lg:block w-full text-center">
+          <div className="mt-auto pt-8 hidden lg:block">
             <p className="text-[#374151] text-xs">© {new Date().getFullYear()} EHS Learning System</p>
           </div>
         </motion.div>
