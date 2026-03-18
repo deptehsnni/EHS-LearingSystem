@@ -277,22 +277,25 @@ export const ParticipantFlow: React.FC = () => {
     };
 
     try {
-      await supabase.from('hasil_ujian').insert([result]);
-      
-      // Increment persistent stats
-      await supabase.rpc('increment_stat', { stat_id: 'total_ujian_selesai' });
-      if (isLulus) {
-        await supabase.rpc('increment_stat', { stat_id: 'total_lulus' });
-      } else {
-        await supabase.rpc('increment_stat', { stat_id: 'total_gagal' });
-      }
+      const { error: insertError } = await supabase.from('hasil_ujian').insert([result]);
+      if (insertError) console.error('Gagal simpan hasil:', insertError.message);
+
+      // Increment stats — jangan blokir jika gagal
+      try {
+        await supabase.rpc('increment_stat', { stat_id: 'total_ujian_selesai' });
+        if (isLulus) {
+          await supabase.rpc('increment_stat', { stat_id: 'total_lulus' });
+        } else {
+          await supabase.rpc('increment_stat', { stat_id: 'total_gagal' });
+        }
+      } catch (_) { /* increment_stat opsional, abaikan jika gagal */ }
 
       setExamResult(result);
       localStorage.removeItem('preferred_exam');
       setStep(4);
     } catch (err) {
       console.error(err);
-      setExamResult(result); // Still show result even if save fails in demo
+      setExamResult(result);
       setStep(4);
     } finally {
       setLoading(false);
