@@ -43,20 +43,28 @@ export const LandingPage: React.FC = () => {
         const examId = preferredExamId || data.allowed_jenis_id;
 
         if (examId) {
-          const { data: jenisData } = await supabase
+          const { data: jenisData, error: jenisError } = await supabase
             .from('jenis_ujian')
             .select('*')
             .eq('id', examId)
             .single();
 
+          console.log('[DEBUG] examId:', examId);
+          console.log('[DEBUG] jenisData:', jenisData);
+          console.log('[DEBUG] jenisError:', jenisError);
+          console.log('[DEBUG] limit_one_per_day:', jenisData?.limit_one_per_day);
+          console.log('[DEBUG] timer_minutes:', jenisData?.timer_minutes);
+
           const isLimitEnabled = jenisData && (jenisData.limit_one_per_day === true || jenisData.timer_minutes < 0);
+          console.log('[DEBUG] isLimitEnabled:', isLimitEnabled);
+
           if (isLimitEnabled) {
-            // Hitung awal hari WIB (UTC+7)
             const now = new Date();
             const offsetMs = 7 * 60 * 60 * 1000;
             const wibNow = new Date(now.getTime() + offsetMs);
             wibNow.setUTCHours(0, 0, 0, 0);
             const todayStart = new Date(wibNow.getTime() - offsetMs).toISOString();
+            console.log('[DEBUG] todayStart:', todayStart);
 
             const { data: previousAttempts, error: attemptsError } = await supabase
               .from('hasil_ujian')
@@ -65,7 +73,8 @@ export const LandingPage: React.FC = () => {
               .eq('jenis_ujian_id', examId)
               .gte('waktu_selesai', todayStart);
 
-            if (attemptsError) console.error('Cek attempts error:', attemptsError.message);
+            console.log('[DEBUG] previousAttempts:', previousAttempts);
+            console.log('[DEBUG] attemptsError:', attemptsError);
 
             if (previousAttempts && previousAttempts.length > 0) {
               const { data: approvedRemedial, error: remError } = await supabase
@@ -76,9 +85,11 @@ export const LandingPage: React.FC = () => {
                 .eq('status', 'approved')
                 .gte('created_at', todayStart);
 
-              if (remError) console.error('Cek remedial error:', remError.message);
+              console.log('[DEBUG] approvedRemedial:', approvedRemedial);
+              console.log('[DEBUG] remError:', remError);
 
               const approvedCount = approvedRemedial?.length || 0;
+              console.log('[DEBUG] approvedCount:', approvedCount, '| attempts:', previousAttempts.length);
 
               if (previousAttempts.length >= 1 + approvedCount) {
                 setRemedialData({ nik: data.nik, nama: data.nama, perusahaan: data.perusahaan, examId });
