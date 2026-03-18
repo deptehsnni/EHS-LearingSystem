@@ -1,0 +1,751 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Layout } from '../components/Layout';
+import { 
+  CheckCircle2, 
+  User, 
+  FileText, 
+  ClipboardCheck, 
+  Clock, 
+  AlertTriangle,
+  ChevronRight,
+  ChevronLeft,
+  LogOut
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { supabase } from '../lib/supabase';
+import { PesertaMaster } from '../types';
+
+export const ParticipantFlow: React.FC = () => {
+  const [step, setStep] = useState(1);
+  const [participant, setParticipant] = useState<PesertaMaster | null>(null);
+  const [commitmentAccepted, setCommitmentAccepted] = useState(false);
+  const [profileData, setProfileData] = useState({
+    status: 'Belum Menikah',
+    agama: '',
+    tanggalLahir: '',
+    pendidikan: 'SMA sederajat',
+    kontakDarurat: ''
+  });
+  const [examStarted, setExamStarted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(1200); // 20 minutes
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [currentJenis, setCurrentJenis] = useState<any>(null);
+  const [examResult, setExamResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [tabViolations, setTabViolations] = useState(0);
+  const [screenshotViolations, setScreenshotViolations] = useState(0);
+  const [showViolationWarning, setShowViolationWarning] = useState(false);
+  const [violationType, setViolationType] = useState<'tab' | 'screenshot'>('tab');
+  const [isObscured, setIsObscured] = useState(false);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const stored = localStorage.getItem('ehs_participant');
+    if (!stored) {
+      navigate('/');
+      return;
+    }
+    setParticipant(JSON.parse(stored));
+  }, [navigate]);
+
+  // Timer effect
+  useEffect(() => {
+    if (examStarted && timeLeft > 0 && !examResult) {
+      const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [examStarted, timeLeft, examResult]);
+
+  // Anti-Cheat Effects
+  useEffect(() => {
+    if (examStarted && !examResult) {
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'hidden') {
+          setTabViolations(v => v + 1);
+          setViolationType('tab');
+          setShowViolationWarning(true);
+        }
+      };
+
+      const handleBlur = () => {
+        setTimeout(() => {
+          if (!document.hasFocus() && !examResult) {
+            setTabViolations(v => v + 1);
+            setViolationType('tab');
+            setShowViolationWarning(true);
+          }
+        }, 100);
+      };
+
+      const triggerObscure = () => {
+        setIsObscured(true);
+        setTimeout(() => setIsObscured(false), 1000);
+      };
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        // PrintScreen
+        if (e.key === 'PrintScreen' || e.keyCode === 44) {
+          e.preventDefault();
+          setScreenshotViolations(v => v + 1);
+          setViolationType('screenshot');
+          setShowViolationWarning(true);
+          triggerObscure();
+          return false;
+        }
+        
+        // Common screenshot/dev shortcuts
+        if (
+          (e.ctrlKey && e.shiftKey && (e.key === 'S' || e.key === 'I' || e.key === 'C' || e.key === 'J')) ||
+          (e.metaKey && e.shiftKey && (e.key === '4' || e.key === '3' || e.key === '5')) || // Mac shortcuts
+          (e.ctrlKey && (e.key === 'u' || e.key === 'p' || e.key === 's'))
+        ) {
+          e.preventDefault();
+          setScreenshotViolations(v => v + 1);
+          setViolationType('screenshot');
+          setShowViolationWarning(true);
+          triggerObscure();
+          return false;
+        }
+      };
+
+      const handleContextMenu = (e: MouseEvent) => {
+        e.preventDefault();
+        return false;
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('blur', handleBlur);
+      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('contextmenu', handleContextMenu);
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('blur', handleBlur);
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('contextmenu', handleContextMenu);
+      };
+    }
+  }, [examStarted, examResult]);
+
+  if (!participant) return null;
+
+  const handleLogout = () => {
+    localStorage.removeItem('ehs_participant');
+    localStorage.removeItem('preferred_exam');
+    navigate('/');
+  };
+
+  const nextStep = () => setStep(prev => prev + 1);
+  const prevStep = () => setStep(prev => prev - 1);
+
+  const startExam = async () => {
+    const preferredExamId = localStorage.getItem('preferred_exam');
+    const examId = preferredExamId || participant?.allowed_jenis_id;
+
+    if (!examId) {
+      alert('Anda belum mendapatkan izin untuk mengikuti ujian apapun. Silakan hubungi Admin.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Fetch specific jenis_ujian to get timer and limits
+      const { data: jenisData } = await supabase
+        .from('jenis_ujian')
+        .select('*')
+        .eq('id', examId)
+        .single();
+      
+      if (jenisData) {
+        setCurrentJenis(jenisData);
+        const isLimitEnabled = jenisData.limit_one_per_day || jenisData.timer_minutes < 0;
+        const actualTimer = Math.abs(jenisData.timer_minutes);
+        
+        setTimeLeft(actualTimer * 60);
+      }
+
+      const { data } = await supabase
+        .from('soal')
+        .select('*')
+        .eq('jenis_ujian_id', examId);
+
+      if (data && data.length > 0) {
+        // Shuffle questions and take the specified count
+        const displayCount = jenisData?.soal_display_count || 20;
+        const shuffledQuestions = [...data].sort(() => Math.random() - 0.5).slice(0, displayCount);
+        
+        // Shuffle options for each question
+        const questionsWithShuffledOptions = shuffledQuestions.map(q => {
+          // Get the original correct text
+          const correctText = q[`pilihan_${q.jawaban_benar.toLowerCase()}` as keyof typeof q] as string;
+          
+          // Create array of original options
+          const originalOptions = [
+            { id: 'A', text: q.pilihan_a },
+            { id: 'B', text: q.pilihan_b },
+            { id: 'C', text: q.pilihan_c },
+            { id: 'D', text: q.pilihan_d }
+          ];
+          
+          // Shuffle the options
+          const shuffled = [...originalOptions].sort(() => Math.random() - 0.5);
+          
+          // Map to the new labels A, B, C, D
+          const options = shuffled.map((opt, index) => ({
+            label: String.fromCharCode(65 + index), // A, B, C, D
+            text: opt.text
+          }));
+          
+          // Find the new label for the correct answer
+          const newCorrectLabel = options.find(opt => opt.text === correctText)?.label || 'A';
+          
+          return { 
+            ...q, 
+            shuffledOptions: options,
+            jawaban_benar: newCorrectLabel // Update the correct answer label to match the shuffled position
+          };
+        });
+
+        setQuestions(questionsWithShuffledOptions);
+      } else {
+        alert('Soal untuk jenis ujian ini belum tersedia.');
+        return;
+      }
+      setExamStarted(true);
+      setStep(3);
+    } catch (err) {
+      console.error(err);
+      alert('Terjadi kesalahan saat memulai ujian.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitExam = async () => {
+    setLoading(true);
+    let correctCount = 0;
+    questions.forEach(q => {
+      if (answers[q.id] === q.jawaban_benar) correctCount++;
+    });
+
+    const score = Math.round((correctCount / questions.length) * 100);
+    const passingScore = currentJenis?.passing_score || 70;
+    const isLulus = score >= passingScore;
+
+    const result = {
+      nik: participant?.nik,
+      nama: participant?.nama,
+      perusahaan: participant?.perusahaan,
+      nilai: score,
+      status_lulus: isLulus,
+      profil_data: { 
+        ...profileData, 
+        tab_violations: tabViolations,
+        screenshot_violations: screenshotViolations,
+        is_remedial: participant?.is_remedial || false
+      },
+      jenis_ujian_id: participant?.allowed_jenis_id,
+      waktu_selesai: new Date().toISOString()
+    };
+
+    try {
+      await supabase.from('hasil_ujian').insert([result]);
+      
+      // Increment persistent stats
+      await supabase.rpc('increment_stat', { stat_id: 'total_ujian_selesai' });
+      if (isLulus) {
+        await supabase.rpc('increment_stat', { stat_id: 'total_lulus' });
+      } else {
+        await supabase.rpc('increment_stat', { stat_id: 'total_gagal' });
+      }
+
+      setExamResult(result);
+      localStorage.removeItem('preferred_exam');
+      setStep(4);
+    } catch (err) {
+      console.error(err);
+      setExamResult(result); // Still show result even if save fails in demo
+      setStep(4);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRequestRemedial = async (specificExamId?: string) => {
+    if (!participant) return;
+    const examId = specificExamId || (questions.length > 0 ? questions[0].jenis_ujian_id : null);
+    
+    if (!examId) {
+      alert('Data ujian tidak ditemukan.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Check if there's already a pending request
+      const { data: existing } = await supabase
+        .from('remedial_requests')
+        .select('*')
+        .eq('nik', participant.nik)
+        .eq('jenis_ujian_id', examId)
+        .eq('status', 'pending');
+
+      if (existing && existing.length > 0) {
+        alert('Permintaan remedial Anda sedang diproses oleh Admin.');
+        return;
+      }
+
+      const { error } = await supabase.from('remedial_requests').insert([{
+        nik: participant.nik,
+        nama: participant.nama,
+        perusahaan: participant.perusahaan,
+        jenis_ujian_id: examId,
+        status: 'pending'
+      }]);
+
+      if (error) throw error;
+      alert('Permintaan remedial telah dikirim ke Admin.');
+    } catch (err) {
+      console.error(err);
+      alert('Gagal mengirim permintaan remedial.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Layout title="Induksi Keselamatan Kerja">
+      <div className={`max-w-4xl mx-auto ${examStarted && !examResult ? 'select-none' : ''}`}>
+        {/* Anti-Screenshot Overlay */}
+        <AnimatePresence>
+          {isObscured && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[200] bg-black flex items-center justify-center"
+            >
+              <h1 className="text-white text-4xl font-black">SCREENSHOT DILARANG!</h1>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Violation Warning Modal */}
+        <AnimatePresence>
+          {showViolationWarning && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            >
+              <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border-4 border-[#B3261E]"
+              >
+                <div className="w-20 h-20 bg-[#F9DEDC] text-[#B3261E] rounded-full flex items-center justify-center mx-auto mb-6">
+                  <AlertTriangle size={48} />
+                </div>
+                <h3 className="text-2xl font-black text-[#B3261E] mb-4">PERINGATAN PELANGGARAN!</h3>
+                <p className="text-[#49454F] mb-8 text-lg">
+                  {violationType === 'tab' 
+                    ? 'Anda terdeteksi berpindah tab atau meninggalkan layar ujian. Tindakan ini dicatat sebagai upaya kecurangan.' 
+                    : 'Dilarang melakukan screenshot atau menyalin konten ujian! Tindakan ini melanggar peraturan keamanan.'}
+                </p>
+                <button 
+                  onClick={() => setShowViolationWarning(false)}
+                  className="w-full py-4 bg-[#B3261E] text-white rounded-2xl font-bold text-xl shadow-lg hover:bg-[#8C1D18] transition-all"
+                >
+                  SAYA MENGERTI & KEMBALI
+                </button>
+                <p className="mt-4 text-xs text-[#49454F]">
+                  Pelanggaran berulang dapat menyebabkan ujian Anda dibatalkan secara otomatis.
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Progress Bar */}
+        <div className="mb-12 relative px-4">
+          {/* Background Line */}
+          <div className="absolute top-5 left-9 right-9 h-[2px] bg-[#E6E1E5]" />
+          
+          {/* Progress Line */}
+          <div 
+            className="absolute top-5 left-9 h-[2px] bg-[#6750A4] transition-all duration-500" 
+            style={{ 
+              width: step === 1 ? '0%' : 
+                     step === 2 ? '33.33%' : 
+                     step === 3 ? '66.66%' : '100%' 
+            }}
+          />
+
+          <div className="flex items-center justify-between relative z-10">
+            {[1, 2, 3, 4].map((s) => (
+              <div key={s} className="flex flex-col items-center">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 ${
+                  step >= s ? 'bg-[#6750A4] text-white' : 'bg-[#E6E1E5] text-[#49454F]'
+                }`}>
+                  {step > s ? <CheckCircle2 size={20} /> : s}
+                </div>
+                <span className={`text-[10px] mt-2 font-medium uppercase tracking-wider ${
+                  step >= s ? 'text-[#6750A4]' : 'text-[#49454F]'
+                }`}>
+                  {['Verifikasi', 'Data & Komitmen', 'Ujian', 'Hasil'][s-1]}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {/* Step 1: Verification */}
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="bg-white rounded-3xl p-8 shadow-sm border border-[#E6E1E5]"
+            >
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <User className="text-[#6750A4]" /> Konfirmasi Identitas
+              </h2>
+              <div className="bg-[#F3F0F5] p-6 rounded-2xl space-y-4 mb-8">
+                <div className="flex justify-between border-b border-[#E6E1E5] pb-3">
+                  <span className="text-[#49454F]">Nama Lengkap</span>
+                  <span className="font-bold text-lg">{participant.nama}</span>
+                </div>
+                <div className="flex justify-between border-b border-[#E6E1E5] pb-3">
+                  <span className="text-[#49454F]">NIK</span>
+                  <span className="font-mono font-bold text-lg">{participant.nik}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#49454F]">Perusahaan</span>
+                  <span className="font-bold text-lg">{participant.perusahaan}</span>
+                </div>
+              </div>
+              <p className="text-[#49454F] mb-8 italic">
+                *Pastikan data di atas sudah sesuai dengan KTP Anda sebelum melanjutkan.
+              </p>
+              <div className="flex gap-4">
+                <button onClick={handleLogout} className="flex-1 py-4 rounded-2xl border border-[#E6E1E5] font-bold text-[#B3261E] flex items-center justify-center gap-2">
+                  <LogOut size={18} /> Keluar
+                </button>
+                <button onClick={nextStep} className="flex-[2] py-4 rounded-2xl bg-[#6750A4] text-white font-bold flex items-center justify-center gap-2 shadow-md">
+                  Data Sudah Benar <ChevronRight size={18} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 2: Profile & Commitment */}
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="bg-white rounded-3xl p-8 shadow-sm border border-[#E6E1E5]"
+            >
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                <FileText className="text-[#6750A4]" /> Data Diri & Komitmen
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                  <label className="block text-sm font-medium text-[#49454F] mb-2">Status Perkawinan</label>
+                  <select 
+                    value={profileData.status}
+                    onChange={e => setProfileData({...profileData, status: e.target.value})}
+                    className="w-full p-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#6750A4]"
+                  >
+                    <option>Belum Menikah</option>
+                    <option>Menikah</option>
+                    <option>Cerai Hidup</option>
+                    <option>Cerai Mati</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#49454F] mb-2">Agama</label>
+                  <input 
+                    type="text" 
+                    value={profileData.agama}
+                    onChange={e => setProfileData({...profileData, agama: e.target.value})}
+                    placeholder="Contoh: Islam"
+                    className="w-full p-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#6750A4]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#49454F] mb-2">Tanggal Lahir</label>
+                  <input 
+                    type="date" 
+                    value={profileData.tanggalLahir}
+                    onChange={e => setProfileData({...profileData, tanggalLahir: e.target.value})}
+                    className="w-full p-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#6750A4]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#49454F] mb-2">Pendidikan Terakhir</label>
+                  <select 
+                    value={profileData.pendidikan}
+                    onChange={e => setProfileData({...profileData, pendidikan: e.target.value})}
+                    className="w-full p-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#6750A4]"
+                  >
+                    <option>SD sederajat</option>
+                    <option>SMP sederajat</option>
+                    <option>SMA sederajat</option>
+                    <option>D3</option>
+                    <option>S1</option>
+                    <option>S2</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-[#49454F] mb-2">Kontak Darurat (Nama - No HP)</label>
+                  <input 
+                    type="text" 
+                    value={profileData.kontakDarurat}
+                    onChange={e => setProfileData({...profileData, kontakDarurat: e.target.value})}
+                    placeholder="Contoh: Ibu Budi - 08123456789"
+                    className="w-full p-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#6750A4]"
+                  />
+                </div>
+              </div>
+
+              <div className="w-full h-px bg-[#E6E1E5] mb-8" />
+
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <ClipboardCheck className="text-[#6750A4]" size={20} /> {currentJenis?.commitment_title || 'Pakta Integritas Keselamatan'}
+              </h3>
+              <div className="prose prose-sm max-w-none bg-[#FDFCFB] p-6 rounded-2xl border border-[#E6E1E5] mb-8">
+                <div className="whitespace-pre-wrap text-[#49454F]">
+                  {currentJenis?.commitment_content || (
+                    <>
+                      <p>Saya yang bertanda tangan di bawah ini menyatakan berkomitmen untuk:</p>
+                      <ul className="list-disc pl-5 space-y-2">
+                        <li>Mematuhi seluruh peraturan K3LH yang berlaku di area kerja.</li>
+                        <li>Menggunakan Alat Pelindung Diri (APD) yang dipersyaratkan secara benar.</li>
+                        <li>Melaporkan setiap kondisi tidak aman (Unsafe Condition) dan tindakan tidak aman (Unsafe Action).</li>
+                        <li>Menjaga kebersihan dan kerapihan area kerja (5S/5R).</li>
+                        <li>Tidak melakukan tindakan yang membahayakan diri sendiri maupun orang lain.</li>
+                      </ul>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <label className="flex items-center gap-4 p-4 bg-[#F3F0F5] rounded-2xl cursor-pointer mb-8 transition-all hover:bg-[#EADDFF]">
+                <input 
+                  type="checkbox" 
+                  checked={commitmentAccepted}
+                  onChange={(e) => setCommitmentAccepted(e.target.checked)}
+                  className="w-6 h-6 rounded border-[#6750A4] text-[#6750A4] focus:ring-[#6750A4]"
+                />
+                <span className="font-medium text-[#1C1B1F]">Saya telah mengisi data dengan benar dan menyetujui pakta integritas.</span>
+              </label>
+
+              <div className="flex gap-4">
+                <button onClick={prevStep} className="flex-1 py-4 rounded-2xl border border-[#E6E1E5] font-bold text-[#49454F]">
+                  Kembali
+                </button>
+                <button 
+                  onClick={startExam} 
+                  disabled={!profileData.agama || !profileData.tanggalLahir || !profileData.kontakDarurat || !commitmentAccepted || loading}
+                  className="flex-[2] py-4 rounded-2xl bg-[#6750A4] text-white font-bold shadow-md disabled:opacity-50"
+                >
+                  {loading ? 'Menyiapkan Ujian...' : 'Lanjut ke Ujian'}
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: Exam */}
+          {step === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-6"
+            >
+              {/* Anti-Cheat Watermark */}
+              <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden opacity-[0.07] select-none flex flex-wrap gap-20 p-10 justify-center items-center content-center">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="rotate-[-35deg] text-2xl font-bold whitespace-nowrap text-[#6750A4]">
+                    {participant.nama} - {participant.nik} - {participant.perusahaan}
+                  </div>
+                ))}
+              </div>
+
+              {/* Timer & Progress */}
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-[#E6E1E5] flex flex-col sm:flex-row items-center justify-between sticky top-20 z-40 gap-4">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${timeLeft < 300 ? 'bg-[#F9DEDC] text-[#B3261E]' : 'bg-[#EADDFF] text-[#6750A4]'}`}>
+                      <Clock size={20} />
+                    </div>
+                    <span className={`text-xl font-mono font-bold ${timeLeft < 300 ? 'text-[#B3261E]' : 'text-[#1C1B1F]'}`}>
+                      {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                    </span>
+                  </div>
+                  <div className="sm:hidden text-[#49454F] text-xs font-medium">
+                    {Object.keys(answers).length} / {questions.length}
+                  </div>
+                </div>
+                <div className="hidden sm:block text-[#49454F] font-medium">
+                  Progress: {Object.keys(answers).length} / {questions.length} Terjawab
+                </div>
+                <div className="w-full sm:w-32 h-2 bg-[#E6E1E5] rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-[#6750A4] transition-all duration-300" 
+                    style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Questions List */}
+              <div className="space-y-8">
+                {questions.map((q, index) => (
+                  <div key={q.id} className="bg-white rounded-3xl p-6 md:p-8 shadow-md border border-[#E6E1E5]">
+                    <div className="flex items-start gap-4 mb-6">
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-[#6750A4] text-white flex items-center justify-center font-bold flex-shrink-0 text-sm md:text-base">
+                        {index + 1}
+                      </div>
+                      <p className="text-lg md:text-xl font-medium text-[#1C1B1F] leading-relaxed">
+                        {q.pertanyaan}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 md:gap-4">
+                      {q.shuffledOptions.map((optObj: any) => {
+                        const isSelected = answers[q.id] === optObj.label;
+                        return (
+                          <button
+                            key={optObj.label}
+                            onClick={() => setAnswers({...answers, [q.id]: optObj.label})}
+                            className={`p-4 md:p-5 rounded-2xl text-left border-2 transition-all flex items-center gap-3 md:gap-4 ${
+                              isSelected 
+                                ? 'border-[#6750A4] bg-[#EADDFF] shadow-sm' 
+                                : 'border-[#E6E1E5] hover:border-[#CAC4D0] bg-white'
+                            }`}
+                          >
+                            <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${
+                              isSelected ? 'bg-[#6750A4] text-white' : 'bg-[#F3F0F5] text-[#49454F]'
+                            }`}>
+                              {optObj.label}
+                            </div>
+                            <span className="text-sm md:text-lg">{optObj.text}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Submit Section */}
+              <div className="pt-12 pb-20 flex flex-col items-center gap-6">
+                <div className="w-full h-px bg-[#E6E1E5]" />
+                <button 
+                  onClick={submitExam}
+                  disabled={loading || Object.keys(answers).length < questions.length}
+                  className="w-full max-w-md py-5 md:py-6 rounded-[24px] bg-[#6750A4] text-white font-bold text-xl md:text-2xl shadow-xl hover:bg-[#4F378B] transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  {loading ? 'Mengirim Jawaban...' : 'Selesai & Kirim Jawaban'}
+                </button>
+                {Object.keys(answers).length < questions.length && (
+                  <div className="flex items-center gap-3 text-[#B3261E] bg-[#F9DEDC] px-8 py-4 rounded-2xl font-bold animate-pulse">
+                    <AlertTriangle size={24} />
+                    <span>Harap selesaikan semua soal ({Object.keys(answers).length}/{questions.length})</span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 4: Result */}
+          {step === 4 && examResult && (
+            <motion.div
+              key="step4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white rounded-[32px] p-10 shadow-2xl border border-[#E6E1E5] text-center"
+            >
+              <div className={`w-24 h-24 rounded-full mx-auto flex items-center justify-center mb-6 ${
+                examResult.status_lulus ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'
+              }`}>
+                {examResult.status_lulus ? <CheckCircle2 size={64} /> : <AlertTriangle size={64} />}
+              </div>
+              
+              <h2 className="text-3xl font-bold mb-2">
+                {examResult.status_lulus ? 'Selamat, Anda Lulus!' : 'Maaf, Anda Belum Lulus'}
+              </h2>
+              <p className="text-[#49454F] mb-8">
+                Hasil ujian induksi keselamatan kerja Anda telah dicatat.
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-[#F3F0F5] p-6 rounded-3xl">
+                  <span className="block text-sm text-[#49454F] mb-1">Skor Akhir</span>
+                  <span className="text-4xl font-black text-[#6750A4]">{examResult.nilai}</span>
+                </div>
+                <div className="bg-[#F3F0F5] p-6 rounded-3xl">
+                  <span className="block text-sm text-[#49454F] mb-1">Status</span>
+                  <span className={`text-xl font-bold ${examResult.status_lulus ? 'text-[#2E7D32]' : 'text-[#B3261E]'}`}>
+                    {examResult.status_lulus ? 'LULUS' : 'TIDAK LULUS'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Violation Stats */}
+              <div className="bg-[#F9DEDC] p-6 rounded-3xl border border-[#F2B8B5] mb-10 text-left">
+                <h4 className="font-bold text-[#B3261E] flex items-center gap-2 mb-4">
+                  <AlertTriangle size={18} /> Catatan Pelanggaran Keamanan
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#49454F] text-sm">Upaya Pindah Tab/Aplikasi:</span>
+                    <span className="font-bold text-[#B3261E]">{examResult.profil_data.tab_violations || 0} kali</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#49454F] text-sm">Upaya Screenshot:</span>
+                    <span className="font-bold text-[#B3261E]">{examResult.profil_data.screenshot_violations || 0} kali</span>
+                  </div>
+                </div>
+              </div>
+
+              {!examResult.status_lulus && (
+                <div className="bg-[#FFF8E1] p-6 rounded-2xl border border-[#FFE082] mb-8 text-left">
+                  <h4 className="font-bold text-[#F57F17] flex items-center gap-2 mb-2">
+                    <AlertTriangle size={18} /> Remedial
+                  </h4>
+                  <p className="text-sm text-[#795548]">
+                    Batas nilai kelulusan adalah {currentJenis?.passing_score || 70}. Silakan hubungi Admin untuk meminta akses ujian ulang (Remedial).
+                  </p>
+                  <button 
+                    onClick={handleRequestRemedial}
+                    disabled={loading}
+                    className="mt-4 w-full py-3 bg-[#F57F17] text-white rounded-xl font-bold text-sm shadow-sm disabled:opacity-50"
+                  >
+                    {loading ? 'Mengirim...' : 'Minta Akses Remedial'}
+                  </button>
+                </div>
+              )}
+
+              <button 
+                onClick={handleLogout}
+                className="w-full py-4 rounded-2xl bg-[#1C1B1F] text-white font-bold text-lg shadow-lg"
+              >
+                Selesai & Keluar
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </Layout>
+  );
+};
