@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Layout } from '../components/Layout';
-import { User, LogIn, AlertCircle, AlertTriangle } from 'lucide-react';
+import { User, LogIn, AlertCircle, AlertTriangle, ChevronRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -156,145 +155,204 @@ export const LandingPage: React.FC = () => {
     }
   };
 
+  const steps = [
+    { icon: '01', label: 'Masukkan NIK', desc: 'Verifikasi identitas Anda' },
+    { icon: '02', label: 'Isi Data Diri', desc: 'Lengkapi profil & komitmen' },
+    { icon: '03', label: 'Ikuti Ujian', desc: 'Kerjakan soal dengan jujur' },
+  ];
+
   return (
-    <Layout showNav={false}>
-      <div className="max-w-md mx-auto mt-12 sm:mt-20">
-        {/* Inactive Exam Modal */}
-        <AnimatePresence>
-          {showInactiveModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-            >
-              <motion.div
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#E6E1E5]"
-              >
-                <div className="w-20 h-20 bg-[#F9DEDC] text-[#B3261E] rounded-full flex items-center justify-center mx-auto mb-6">
-                  <AlertTriangle size={48} />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1C1B1F] text-center mb-4">Sesi Ujian Belum Dibuka</h3>
-                <p className="text-[#49454F] mb-2 text-center">
-                  Ujian <span className="font-bold text-[#1C1B1F]">{inactiveExamName}</span> saat ini belum aktif.
-                </p>
-                <p className="text-[#49454F] mb-8 text-center text-sm">
-                  Silakan hubungi Admin untuk membuka sesi ujian, atau coba lagi nanti.
-                </p>
-                <button
-                  onClick={() => setShowInactiveModal(false)}
-                  className="w-full py-4 bg-[#B3261E] text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-[#8C1D18] transition-all"
-                >
-                  Tutup
-                </button>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+    <div className="min-h-screen bg-[#0F0F0F] text-white flex flex-col">
+      {/* Background grid pattern */}
+      <div className="fixed inset-0 opacity-[0.03]" style={{backgroundImage: 'linear-gradient(#E6A620 1px, transparent 1px), linear-gradient(90deg, #E6A620 1px, transparent 1px)', backgroundSize: '40px 40px'}} />
 
-        {/* Remedial Request Modal */}
-        <AnimatePresence>
-          {showRemedialModal && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      {/* Modals */}
+      <AnimatePresence>
+        {showInactiveModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="bg-[#1A1A1A] border border-[#B3261E]/40 rounded-3xl p-8 max-w-md w-full shadow-2xl"
             >
-              <motion.div 
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-[#E6E1E5]"
-              >
-                <div className="w-20 h-20 bg-[#FFF8E1] text-[#F57F17] rounded-full flex items-center justify-center mx-auto mb-6">
-                  <AlertTriangle size={48} />
-                </div>
-                <h3 className="text-2xl font-bold text-[#1C1B1F] text-center mb-4">Batas Ujian Tercapai</h3>
-                <p className="text-[#49454F] mb-8 text-center">
-                  Anda sudah mengikuti ujian ini hari ini. Sesuai peraturan, ujian hanya dapat dilakukan 1 kali per hari.
-                  <br /><br />
-                  Silakan klik tombol di bawah untuk mengirim permintaan akses ujian ulang (Remedial) kepada Admin.
-                </p>
-                <div className="flex flex-col gap-3">
-                  <button 
-                    onClick={handleRequestRemedial}
-                    disabled={loading}
-                    className="w-full py-4 bg-[#6750A4] text-white rounded-2xl font-bold text-lg shadow-lg hover:bg-[#4F378B] transition-all disabled:opacity-50"
-                  >
-                    {loading ? 'Mengirim Permintaan...' : 'Minta Akses Remedial'}
-                  </button>
-                  <button 
-                    onClick={() => setShowRemedialModal(false)}
-                    className="w-full py-4 bg-white text-[#49454F] border border-[#E6E1E5] rounded-2xl font-bold text-lg hover:bg-[#F3F0F5] transition-all"
-                  >
-                    Tutup
-                  </button>
-                </div>
-              </motion.div>
+              <div className="w-16 h-16 bg-[#B3261E]/20 text-[#F87171] rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <AlertTriangle size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-white text-center mb-3">Sesi Ujian Belum Dibuka</h3>
+              <p className="text-[#9CA3AF] text-center mb-2 text-sm">
+                Ujian <span className="font-bold text-white">{inactiveExamName}</span> saat ini belum aktif.
+              </p>
+              <p className="text-[#6B7280] text-center text-xs mb-8">Hubungi Admin untuk membuka sesi, atau coba lagi nanti.</p>
+              <button onClick={() => setShowInactiveModal(false)}
+                className="w-full py-3.5 bg-[#B3261E] text-white rounded-2xl font-bold hover:bg-[#8C1D18] transition-all"
+              >Tutup</button>
             </motion.div>
-          )}
-        </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[28px] p-6 md:p-8 shadow-xl border border-[#E6E1E5]"
+      <AnimatePresence>
+        {showRemedialModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          >
+            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="bg-[#1A1A1A] border border-[#E6A620]/30 rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            >
+              <div className="w-16 h-16 bg-[#E6A620]/10 text-[#E6A620] rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <AlertTriangle size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-white text-center mb-3">Batas Ujian Tercapai</h3>
+              <p className="text-[#9CA3AF] text-center text-sm mb-8">
+                Anda sudah mengikuti ujian hari ini. Ujian hanya dapat dilakukan <span className="text-white font-semibold">1 kali per hari</span>.<br/><br/>
+                Kirim permintaan ke Admin untuk mendapatkan akses ujian ulang.
+              </p>
+              <div className="flex flex-col gap-3">
+                <button onClick={handleRequestRemedial} disabled={loading}
+                  className="w-full py-3.5 bg-[#E6A620] text-[#0F0F0F] rounded-2xl font-bold hover:bg-[#F5B800] transition-all disabled:opacity-50"
+                >{loading ? 'Mengirim...' : 'Minta Akses Remedial'}</button>
+                <button onClick={() => setShowRemedialModal(false)}
+                  className="w-full py-3.5 bg-white/5 text-[#9CA3AF] border border-white/10 rounded-2xl font-medium hover:bg-white/10 transition-all"
+                >Tutup</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="relative flex-1 flex flex-col lg:flex-row">
+        {/* Left panel - Branding */}
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="lg:w-1/2 flex flex-col justify-between p-8 md:p-12 lg:p-16 lg:min-h-screen"
         >
-          <div className="flex flex-col items-center mb-8">
-            <img src="/logo.svg" alt="Logo" className="w-32 h-32 object-contain mb-4" referrerPolicy="no-referrer" />
-            <h2 className="text-2xl md:text-4xl font-extrabold text-[#E6A620] text-center">EHS Learning System</h2>
-            <p className="text-[#49454F] text-center mt-2 text-sm md:text-lg font-medium">Sistem Induksi & Keselamatan Kerja Profesional</p>
+          <div className="flex items-center gap-3 mb-auto">
+            <img src="/logo.svg" alt="Logo" className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
+            <span className="text-[#E6A620] font-bold tracking-wide text-sm uppercase">EHS Learning System</span>
           </div>
 
-          <form onSubmit={handleParticipantLogin} className="space-y-6">
-            <div>
-              <label htmlFor="nik" className="block text-sm font-medium text-[#49454F] mb-2 ml-1">
-                Nomor Induk Karyawan (NIK)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#49454F]">
-                  <User size={20} />
-                </div>
-                <input
-                  id="nik"
-                  type="text"
-                  value={nik}
-                  onChange={(e) => setNik(e.target.value)}
-                  placeholder="Masukkan NIK sesuai KTP"
-                  className="w-full pl-12 pr-4 py-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#6750A4] transition-all text-lg"
-                  required
-                />
+          <div className="py-12 lg:py-0">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="inline-flex items-center gap-2 bg-[#E6A620]/10 border border-[#E6A620]/20 rounded-full px-4 py-1.5 mb-6">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#E6A620] animate-pulse" />
+                <span className="text-[#E6A620] text-xs font-semibold uppercase tracking-wider">Sistem Aktif</span>
               </div>
-              {error && (
-                <div className="mt-3 flex items-center gap-2 text-[#B3261E] text-sm bg-[#F9DEDC] p-3 rounded-xl">
-                  <AlertCircle size={16} />
-                  <span>{error}</span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight mb-6">
+                Induksi &<br />
+                <span className="text-[#E6A620]">Keselamatan</span><br />
+                Kerja
+              </h1>
+              <p className="text-[#6B7280] text-base md:text-lg leading-relaxed max-w-md">
+                Platform ujian induksi keselamatan kerja profesional. Pastikan setiap pekerja memahami standar K3 sebelum memasuki area kerja.
+              </p>
+            </motion.div>
+
+            {/* Steps */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="mt-10 space-y-4"
+            >
+              {steps.map((s, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[#E6A620] text-xs font-black">{s.icon}</span>
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-semibold">{s.label}</p>
+                    <p className="text-[#6B7280] text-xs">{s.desc}</p>
+                  </div>
                 </div>
-              )}
-            </div>
+              ))}
+            </motion.div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#6750A4] text-white py-4 rounded-2xl font-bold text-lg shadow-md hover:bg-[#4F378B] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? 'Memverifikasi...' : 'Mulai Induksi'}
-            </button>
-          </form>
-
-          <div className="mt-10 pt-8 border-t border-[#E6E1E5] flex flex-col items-center">
-            <button
-              onClick={() => navigate('/admin/login')}
-              className="text-[#6750A4] font-semibold hover:underline flex items-center gap-2"
-            >
-              <LogIn size={18} />
-              Admin Login
-            </button>
+          <div className="mt-auto pt-8">
+            <p className="text-[#374151] text-xs">© {new Date().getFullYear()} EHS Learning System</p>
           </div>
         </motion.div>
+
+        {/* Right panel - Login form */}
+        <div className="lg:w-1/2 flex items-center justify-center p-6 md:p-12 lg:p-16">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="w-full max-w-md"
+          >
+            <div className="bg-[#161616] border border-white/10 rounded-3xl p-8 md:p-10 shadow-2xl">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-white mb-1">Masuk ke Sistem</h2>
+                <p className="text-[#6B7280] text-sm">Gunakan NIK yang terdaftar untuk melanjutkan</p>
+              </div>
+
+              <form onSubmit={handleParticipantLogin} className="space-y-5">
+                <div>
+                  <label htmlFor="nik" className="block text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider mb-2">
+                    Nomor Induk Karyawan (NIK)
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#4B5563]">
+                      <User size={18} />
+                    </div>
+                    <input
+                      id="nik"
+                      type="text"
+                      value={nik}
+                      onChange={(e) => setNik(e.target.value)}
+                      placeholder="Masukkan NIK Anda"
+                      className="w-full pl-11 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-[#E6A620]/50 focus:border-[#E6A620]/50 transition-all text-white placeholder-[#374151] outline-none"
+                      required
+                    />
+                  </div>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-3 flex items-center gap-2 text-[#F87171] text-xs bg-[#B3261E]/10 border border-[#B3261E]/20 p-3 rounded-xl"
+                    >
+                      <AlertCircle size={14} />
+                      <span>{error}</span>
+                    </motion.div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-[#E6A620] text-[#0F0F0F] py-4 rounded-2xl font-bold text-base hover:bg-[#F5B800] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-[#E6A620]/20"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-[#0F0F0F]/30 border-t-[#0F0F0F] rounded-full animate-spin" />
+                      Memverifikasi...
+                    </>
+                  ) : (
+                    <>Mulai Induksi <ChevronRight size={18} /></>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-8 pt-6 border-t border-white/5 flex justify-center">
+                <button
+                  onClick={() => navigate('/admin/login')}
+                  className="text-[#4B5563] text-sm hover:text-[#9CA3AF] transition-colors flex items-center gap-2"
+                >
+                  <LogIn size={15} />
+                  Admin Login
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
-    </Layout>
+    </div>
   );
 };
