@@ -97,31 +97,32 @@ export const LandingPage: React.FC = () => {
             if (attemptsError) console.error('Cek attempts error:', attemptsError.message);
 
             if (previousAttempts && previousAttempts.length > 0) {
-              // Ambil remedial approved yang belum dipakai (status 'approved', bukan 'used')
-              const { data: approvedRemedial } = await supabase
+              // Hitung total slot yang pernah diberikan (approved + used) hari ini
+              const { data: allRemedial } = await supabase
                 .from('remedial_requests')
-                .select('id')
+                .select('id, status')
                 .eq('nik', nik)
                 .eq('jenis_ujian_id', examId)
-                .eq('status', 'approved');
+                .in('status', ['approved', 'used'])
+                .gte('created_at', todayStart);
 
-              const availableSlot = approvedRemedial?.length || 0;
+              const totalSlotDiberikan = allRemedial?.length || 0;
+              const approvedSlot = allRemedial?.filter(r => r.status === 'approved') || [];
 
-              // Total slot = 1 (ujian awal) + jumlah approved yang belum dipakai
-              if (previousAttempts.length >= 1 + availableSlot) {
-                // Tidak ada slot tersisa → tampilkan modal
+              // Blokir jika attempts >= 1 (ujian awal) + total slot yang pernah diberikan
+              if (previousAttempts.length >= 1 + totalSlotDiberikan) {
                 setRemedialData({ nik: data.nik, nama: data.nama, perusahaan: data.perusahaan, examId });
                 setShowRemedialModal(true);
                 setLoading(false);
                 return;
               }
 
-              // Ada slot remedial → tandai 1 slot sebagai 'used' lalu izinkan masuk
-              if (approvedRemedial && approvedRemedial.length > 0) {
+              // Ada slot approved yang belum dipakai → tandai used, izinkan masuk
+              if (approvedSlot.length > 0) {
                 await supabase
                   .from('remedial_requests')
                   .update({ status: 'used' })
-                  .eq('id', approvedRemedial[0].id);
+                  .eq('id', approvedSlot[0].id);
               }
               data.is_remedial = true;
             }
