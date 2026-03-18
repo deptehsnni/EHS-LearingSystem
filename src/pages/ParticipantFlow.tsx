@@ -45,7 +45,7 @@ export const ParticipantFlow: React.FC = () => {
   const [showPenaltyModal, setShowPenaltyModal] = useState(false);
   const [penaltyCountdown, setPenaltyCountdown] = useState(0);
   const [sessionInactive, setSessionInactive] = useState(false);
-  const penaltyTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const [activeExamId, setActiveExamId] = useState<string | null>(null);
 
   const navigate = useNavigate();
 
@@ -258,9 +258,8 @@ export const ParticipantFlow: React.FC = () => {
       
       if (jenisData) {
         setCurrentJenis(jenisData);
-        const isLimitEnabled = jenisData.limit_one_per_day || jenisData.timer_minutes < 0;
+        setActiveExamId(examId);
         const actualTimer = Math.abs(jenisData.timer_minutes);
-        
         setTimeLeft(actualTimer * 60);
       }
 
@@ -358,13 +357,16 @@ export const ParticipantFlow: React.FC = () => {
         copy_violations: copyViolations,
         is_remedial: participant?.is_remedial || false
       },
-      jenis_ujian_id: currentJenis?.id || participant?.allowed_jenis_id,
+      jenis_ujian_id: activeExamId || currentJenis?.id || participant?.allowed_jenis_id,
       waktu_selesai: new Date().toISOString()
     };
 
     try {
       const { error: insertError } = await supabase.from('hasil_ujian').insert([result]);
-      if (insertError) console.error('Gagal simpan hasil:', insertError.message);
+      if (insertError) {
+        console.error('Gagal simpan hasil:', insertError.message, insertError.details);
+        // Tetap lanjutkan ke halaman hasil meski gagal simpan
+      }
 
       // Increment stats — jangan blokir jika gagal
       try {
