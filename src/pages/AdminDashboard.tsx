@@ -479,18 +479,20 @@ export const AdminDashboard: React.FC = () => {
       title: 'Hapus Peserta',
       message: 'Apakah Anda yakin ingin menghapus peserta ini? Seluruh riwayat ujian peserta ini juga akan dihapus.',
       onConfirm: async () => {
-        // Delete related records first to avoid foreign key constraint errors
-        await supabase.from('hasil_ujian').delete().eq('nik', nik);
-        await supabase.from('remedial_requests').delete().eq('nik', nik);
-        
-        const { error } = await supabase.from('peserta_master').delete().eq('nik', nik);
-        if (error) {
-          console.error(error);
-          alert('Gagal menghapus peserta: ' + error.message);
-        } else {
-          fetchData();
+        try {
+          await supabase.from('hasil_ujian').delete().eq('nik', nik);
+          await supabase.from('remedial_requests').delete().eq('nik', nik);
+          const { error } = await supabase.from('peserta_master').delete().eq('nik', nik);
+          if (error) {
+            alert('Gagal menghapus peserta: ' + error.message);
+          } else {
+            fetchData();
+          }
+        } catch (err: any) {
+          alert('Terjadi kesalahan: ' + (err.message || 'Gagal menghapus peserta'));
+        } finally {
+          setShowConfirmModal(prev => ({ ...prev, show: false }));
         }
-        setShowConfirmModal(prev => ({ ...prev, show: false }));
       }
     });
   };
@@ -501,9 +503,18 @@ export const AdminDashboard: React.FC = () => {
       title: 'Hapus Soal',
       message: 'Apakah Anda yakin ingin menghapus soal ini?',
       onConfirm: async () => {
-        await supabase.from('soal').delete().eq('id', id);
-        fetchData();
-        setShowConfirmModal(prev => ({ ...prev, show: false }));
+        try {
+          const { error } = await supabase.from('soal').delete().eq('id', id);
+          if (error) {
+            alert('Gagal menghapus soal: ' + error.message);
+          } else {
+            fetchData();
+          }
+        } catch (err: any) {
+          alert('Terjadi kesalahan: ' + (err.message || 'Gagal menghapus soal'));
+        } finally {
+          setShowConfirmModal(prev => ({ ...prev, show: false }));
+        }
       }
     });
   };
