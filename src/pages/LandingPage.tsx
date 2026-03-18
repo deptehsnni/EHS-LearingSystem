@@ -57,7 +57,7 @@ export const LandingPage: React.FC = () => {
         .single();
 
       if (fetchError || !data) {
-        setError('NIK tidak terdaftar. Silakan hubungi Admin.');
+        setError('NIK / No. ID tidak terdaftar. Silakan hubungi Admin.');
       } else {
         // Check for daily limit before proceeding
         const preferredExamId = localStorage.getItem('preferred_exam');
@@ -176,7 +176,7 @@ export const LandingPage: React.FC = () => {
   };
 
   const steps = [
-    { icon: '01', label: 'Masukkan NIK', desc: 'Verifikasi identitas Anda' },
+    { icon: '01', label: 'Masukkan NIK / No. ID', desc: 'NIK KTP atau ID Karyawan' },
     { icon: '02', label: 'Isi Data Diri', desc: 'Lengkapi profil & komitmen' },
     { icon: '03', label: 'Ikuti Ujian', desc: 'Kerjakan soal dengan jujur' },
   ];
@@ -322,13 +322,13 @@ export const LandingPage: React.FC = () => {
             <div className="bg-[#161616] border border-white/10 rounded-3xl p-8 md:p-10 shadow-2xl">
               <div className="mb-8">
                 <h2 className="text-2xl font-bold text-white mb-1">Masuk ke Sistem</h2>
-                <p className="text-[#6B7280] text-sm">Gunakan NIK yang terdaftar untuk melanjutkan</p>
+                <p className="text-[#6B7280] text-sm">Masukkan NIK KTP atau No. ID Karyawan Anda</p>
               </div>
 
               <form onSubmit={handleParticipantLogin} className="space-y-5">
                 <div>
                   <label htmlFor="nik" className="block text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider mb-2">
-                    Nomor Induk Karyawan (NIK)
+                    NIK KTP / No. ID Karyawan
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#4B5563]">
@@ -339,7 +339,7 @@ export const LandingPage: React.FC = () => {
                       type="text"
                       value={nik}
                       onChange={(e) => setNik(e.target.value)}
-                      placeholder="Masukkan NIK Anda"
+                      placeholder="Contoh: 3271XXXXXXXXXX / EMP-001"
                       className="w-full pl-11 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-[#E6A620]/50 focus:border-[#E6A620]/50 transition-all text-white placeholder-[#374151] outline-none"
                       required
                     />
