@@ -83,8 +83,13 @@ export const ParticipantFlow: React.FC = () => {
     if (examStarted && !examResult) {
       const handleVisibilityChange = () => {
         if (document.visibilityState === 'hidden') {
+          // Tampilkan overlay hitam saat app di-background (termasuk saat screenshot di mobile)
+          setIsObscured(true);
           setTabViolations(v => v + 1);
           setViolationType('tab');
+        } else {
+          // Saat kembali ke foreground, sembunyikan overlay dan tampilkan warning
+          setIsObscured(false);
           setShowViolationWarning(true);
         }
       };
@@ -92,9 +97,14 @@ export const ParticipantFlow: React.FC = () => {
       const handleBlur = () => {
         setTimeout(() => {
           if (!document.hasFocus() && !examResult) {
+            setIsObscured(true);
             setTabViolations(v => v + 1);
             setViolationType('tab');
-            setShowViolationWarning(true);
+            // Auto-sembunyikan overlay setelah 1.5 detik dan tampilkan warning
+            setTimeout(() => {
+              setIsObscured(false);
+              setShowViolationWarning(true);
+            }, 1500);
           }
         }, 100);
       };
@@ -363,17 +373,49 @@ export const ParticipantFlow: React.FC = () => {
 
   return (
     <Layout title="Induksi Keselamatan Kerja">
+      {/* CSS untuk blackout saat print/screenshot */}
+      {examStarted && !examResult && (
+        <style>{`
+          @media print {
+            body * { visibility: hidden !important; }
+            body::after {
+              content: 'KONTEN INI TIDAK DAPAT DIAMBIL GAMBARNYA';
+              visibility: visible !important;
+              position: fixed;
+              inset: 0;
+              background: black;
+              color: white;
+              font-size: 24px;
+              font-weight: bold;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 99999;
+            }
+          }
+          @media screen and (display-mode: standalone) {
+            .exam-content { -webkit-user-select: none; user-select: none; }
+          }
+        `}</style>
+      )}
+
       <div className={`max-w-4xl mx-auto px-2 sm:px-4 ${examStarted && !examResult ? 'select-none' : ''}`}>
-        {/* Anti-Screenshot Overlay */}
+        {/* Anti-Screenshot Overlay - muncul saat tab hidden atau screenshot mobile */}
         <AnimatePresence>
           {isObscured && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[200] bg-black flex items-center justify-center"
+              className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center gap-6 p-8"
             >
-              <h1 className="text-white text-4xl font-black">SCREENSHOT DILARANG!</h1>
+              <div className="w-20 h-20 bg-[#B3261E]/20 rounded-full flex items-center justify-center">
+                <AlertTriangle size={40} className="text-[#F87171]" />
+              </div>
+              <h1 className="text-white text-2xl sm:text-4xl font-black text-center">SCREENSHOT DILARANG!</h1>
+              <p className="text-white/60 text-sm sm:text-base text-center max-w-sm">
+                Pengambilan tangkapan layar tidak diizinkan selama ujian berlangsung. Tindakan ini telah dicatat.
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
