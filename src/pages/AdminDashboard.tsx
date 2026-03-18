@@ -1539,49 +1539,78 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {activeTab === 'jenis_ujian' && (
-          <div className="space-y-3">
-            {jenisUjian.length === 0 && (
-              <div className="bg-white rounded-2xl border border-[#E6E1E5] p-8 text-center text-[#49454F]">
-                Belum ada data jenis ujian. Klik "Tambah Jenis" untuk memulai.
-              </div>
-            )}
-            {jenisUjian.map((j) => (
-              <div key={j.id} className="bg-white rounded-2xl border border-[#E6E1E5] shadow-sm p-4">
-                <div className="flex items-start gap-3">
-                  <input type="checkbox" className="rounded border-[#E6E1E5] text-[#6750A4] focus:ring-[#6750A4] mt-1 flex-shrink-0"
-                    checked={selectedJenis.includes(j.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) setSelectedJenis([...selectedJenis, j.id]);
-                      else setSelectedJenis(selectedJenis.filter(id => id !== j.id));
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <button onClick={() => setViewingQuestionsJenis(j)} className="font-bold text-[#6750A4] hover:underline text-left text-sm leading-tight">
-                        {j.nama}
-                      </button>
-                      <button onClick={() => toggleJenisStatus(j.id, j.is_active)}
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase flex-shrink-0 ${j.is_active ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>
-                        {j.is_active ? '🟢 ON' : '🔴 OFF'}
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <span className="text-[10px] bg-[#F3F0F5] text-[#49454F] px-2 py-0.5 rounded-full">{Math.abs(j.timer_minutes)} menit</span>
-                      <span className={clsx("text-[10px] px-2 py-0.5 rounded-full font-bold", j.timer_minutes < 0 ? "bg-[#E3F2FD] text-[#1565C0]" : "bg-[#F5F5F5] text-[#757575]")}>
-                        {j.timer_minutes < 0 ? 'Limit 1x/hari' : 'Tanpa limit'}
-                      </span>
-                      {j.has_commitment && <span className="text-[10px] bg-[#E8F5E9] text-[#2E7D32] px-2 py-0.5 rounded-full font-bold">Komitmen</span>}
-                    </div>
-                    <div className="flex gap-1">
-                      <button onClick={() => copyExamLink(j.id)} className="p-2 text-[#6750A4] hover:bg-[#EADDFF] rounded-lg transition-all" title="Salin Link"><Copy size={16} /></button>
-                      <button onClick={() => handleShowQR(j)} className="p-2 text-[#6750A4] hover:bg-[#EADDFF] rounded-lg transition-all" title="QR Code"><QrCode size={16} /></button>
-                      <button onClick={() => handleEditJenis(j)} className="p-2 text-[#49454F] hover:text-[#6750A4] hover:bg-[#EADDFF] rounded-lg transition-all" title="Edit"><Settings size={16} /></button>
-                      <button onClick={() => { if (confirm('Hapus jenis ujian ini?')) { supabase.from('jenis_ujian').delete().eq('id', j.id).then(() => fetchData()); } }} className="p-2 text-[#B3261E] hover:bg-[#F9DEDC] rounded-lg transition-all" title="Hapus"><Trash2 size={16} /></button>
+          <div>
+            {/* PC: Tabel */}
+            <div className="hidden md:block bg-white rounded-[32px] border border-[#E6E1E5] shadow-sm overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-[#F3F0F5] text-[#49454F] text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4"><input type="checkbox" className="rounded border-[#E6E1E5] text-[#6750A4] focus:ring-[#6750A4]"
+                      onChange={(e) => { if (e.target.checked) setSelectedJenis(jenisUjian.map(j => j.id)); else setSelectedJenis([]); }}
+                      checked={selectedJenis.length === jenisUjian.length && jenisUjian.length > 0} /></th>
+                    <th className="px-6 py-4 font-bold">Nama Ujian / Training</th>
+                    <th className="px-6 py-4 font-bold">Durasi</th>
+                    <th className="px-6 py-4 font-bold">Limit 1x/Hari</th>
+                    <th className="px-6 py-4 font-bold">Komitmen</th>
+                    <th className="px-6 py-4 font-bold">Status</th>
+                    <th className="px-6 py-4 font-bold">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E6E1E5]">
+                  {jenisUjian.map((j) => (
+                    <tr key={j.id} className="hover:bg-[#FDFCFB] transition-colors">
+                      <td className="px-6 py-4"><input type="checkbox" className="rounded border-[#E6E1E5] text-[#6750A4] focus:ring-[#6750A4]"
+                        checked={selectedJenis.includes(j.id)}
+                        onChange={(e) => { if (e.target.checked) setSelectedJenis([...selectedJenis, j.id]); else setSelectedJenis(selectedJenis.filter(id => id !== j.id)); }} /></td>
+                      <td className="px-6 py-4"><button onClick={() => setViewingQuestionsJenis(j)} className="font-bold text-[#6750A4] hover:underline text-left">{j.nama}</button></td>
+                      <td className="px-6 py-4">{Math.abs(j.timer_minutes)} Menit</td>
+                      <td className="px-6 py-4"><span className={clsx("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", j.timer_minutes < 0 ? "bg-[#E3F2FD] text-[#1565C0]" : "bg-[#F5F5F5] text-[#757575]")}>{j.timer_minutes < 0 ? 'Ya' : 'Tidak'}</span></td>
+                      <td className="px-6 py-4">{j.has_commitment ? <span className="text-[#2E7D32] flex items-center gap-1 text-xs font-medium"><CheckCircle2 size={14} /> Aktif</span> : <span className="text-[#49454F] text-xs">Tidak Ada</span>}</td>
+                      <td className="px-6 py-4"><button onClick={() => toggleJenisStatus(j.id, j.is_active)} className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase cursor-pointer transition-all hover:opacity-80 ${j.is_active ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>{j.is_active ? '🟢 ON' : '🔴 OFF'}</button></td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-1">
+                          <button onClick={() => copyExamLink(j.id)} className="p-2 text-[#6750A4] hover:bg-[#EADDFF] rounded-lg transition-all" title="Salin Link"><Copy size={18} /></button>
+                          <button onClick={() => handleShowQR(j)} className="p-2 text-[#6750A4] hover:bg-[#EADDFF] rounded-lg transition-all" title="QR Code"><QrCode size={18} /></button>
+                          <button onClick={() => handleEditJenis(j)} className="p-2 text-[#49454F] hover:text-[#6750A4] hover:bg-[#EADDFF] rounded-lg transition-all" title="Edit"><Settings size={18} /></button>
+                          <button onClick={() => { if (confirm('Hapus jenis ujian ini?')) { supabase.from('jenis_ujian').delete().eq('id', j.id).then(() => fetchData()); } }} className="p-2 text-[#B3261E] hover:bg-[#F9DEDC] rounded-lg transition-all" title="Hapus"><Trash2 size={18} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {jenisUjian.length === 0 && <tr><td colSpan={7} className="px-6 py-12 text-center text-[#49454F]">Belum ada data jenis ujian. Klik "Tambah Jenis" untuk memulai.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+            {/* Mobile: Card */}
+            <div className="md:hidden space-y-3">
+              {jenisUjian.length === 0 && <div className="bg-white rounded-2xl border border-[#E6E1E5] p-8 text-center text-[#49454F]">Belum ada data jenis ujian.</div>}
+              {jenisUjian.map((j) => (
+                <div key={j.id} className="bg-white rounded-2xl border border-[#E6E1E5] shadow-sm p-4">
+                  <div className="flex items-start gap-3">
+                    <input type="checkbox" className="rounded border-[#E6E1E5] text-[#6750A4] focus:ring-[#6750A4] mt-1 flex-shrink-0"
+                      checked={selectedJenis.includes(j.id)}
+                      onChange={(e) => { if (e.target.checked) setSelectedJenis([...selectedJenis, j.id]); else setSelectedJenis(selectedJenis.filter(id => id !== j.id)); }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <button onClick={() => setViewingQuestionsJenis(j)} className="font-bold text-[#6750A4] hover:underline text-left text-sm leading-tight">{j.nama}</button>
+                        <button onClick={() => toggleJenisStatus(j.id, j.is_active)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase flex-shrink-0 ${j.is_active ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>{j.is_active ? '🟢 ON' : '🔴 OFF'}</button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        <span className="text-[10px] bg-[#F3F0F5] text-[#49454F] px-2 py-0.5 rounded-full">{Math.abs(j.timer_minutes)} menit</span>
+                        <span className={clsx("text-[10px] px-2 py-0.5 rounded-full font-bold", j.timer_minutes < 0 ? "bg-[#E3F2FD] text-[#1565C0]" : "bg-[#F5F5F5] text-[#757575]")}>{j.timer_minutes < 0 ? 'Limit 1x/hari' : 'Tanpa limit'}</span>
+                        {j.has_commitment && <span className="text-[10px] bg-[#E8F5E9] text-[#2E7D32] px-2 py-0.5 rounded-full font-bold">Komitmen</span>}
+                      </div>
+                      <div className="flex gap-1">
+                        <button onClick={() => copyExamLink(j.id)} className="p-2 text-[#6750A4] hover:bg-[#EADDFF] rounded-lg" title="Salin Link"><Copy size={16} /></button>
+                        <button onClick={() => handleShowQR(j)} className="p-2 text-[#6750A4] hover:bg-[#EADDFF] rounded-lg" title="QR Code"><QrCode size={16} /></button>
+                        <button onClick={() => handleEditJenis(j)} className="p-2 text-[#49454F] hover:bg-[#EADDFF] rounded-lg" title="Edit"><Settings size={16} /></button>
+                        <button onClick={() => { if (confirm('Hapus?')) { supabase.from('jenis_ujian').delete().eq('id', j.id).then(() => fetchData()); } }} className="p-2 text-[#B3261E] hover:bg-[#F9DEDC] rounded-lg" title="Hapus"><Trash2 size={16} /></button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
@@ -1824,51 +1853,68 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {activeTab === 'requests' && (
-          <div className="space-y-3">
-            {requests.length === 0 && (
-              <div className="bg-white rounded-2xl border border-[#E6E1E5] p-8 text-center text-[#49454F]">
-                Tidak ada request remedial saat ini.
-              </div>
-            )}
-            {requests.map((r) => (
-              <div key={r.id} className="bg-white rounded-2xl border border-[#E6E1E5] shadow-sm p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-bold text-[#1C1B1F] text-sm">{r.nama}</p>
-                      <span className={clsx("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase flex-shrink-0",
-                        r.status === 'pending' ? "bg-[#FFF8E1] text-[#F57F17]" :
-                        r.status === 'approved' ? "bg-[#E8F5E9] text-[#2E7D32]" :
-                        "bg-[#F9DEDC] text-[#B3261E]"
-                      )}>{r.status}</span>
+          <div>
+            {/* PC: Tabel */}
+            <div className="hidden md:block bg-white rounded-[32px] border border-[#E6E1E5] shadow-sm overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-[#F3F0F5] text-[#49454F] text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4 font-bold">Waktu Request</th>
+                    <th className="px-6 py-4 font-bold">Peserta</th>
+                    <th className="px-6 py-4 font-bold">Perusahaan</th>
+                    <th className="px-6 py-4 font-bold">Jenis Ujian</th>
+                    <th className="px-6 py-4 font-bold">Status</th>
+                    <th className="px-6 py-4 font-bold">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E6E1E5]">
+                  {requests.map((r) => (
+                    <tr key={r.id} className="hover:bg-[#FDFCFB] transition-colors">
+                      <td className="px-6 py-4 text-sm">{format(new Date(r.created_at), 'dd/MM/yyyy HH:mm')}</td>
+                      <td className="px-6 py-4"><p className="font-bold text-[#1C1B1F]">{r.nama}</p><p className="text-xs text-[#49454F] font-mono">{r.nik}</p></td>
+                      <td className="px-6 py-4 text-sm font-medium">{r.perusahaan || '-'}</td>
+                      <td className="px-6 py-4 text-sm">{jenisUjian.find(j => j.id === r.jenis_ujian_id)?.nama || 'Unknown'}</td>
+                      <td className="px-6 py-4"><span className={clsx("px-3 py-1 rounded-full text-[10px] font-bold uppercase", r.status === 'pending' ? "bg-[#FFF8E1] text-[#F57F17]" : r.status === 'approved' ? "bg-[#E8F5E9] text-[#2E7D32]" : "bg-[#F9DEDC] text-[#B3261E]")}>{r.status}</span></td>
+                      <td className="px-6 py-4">{r.status === 'pending' && (<div className="flex gap-2"><button onClick={() => handleApproveRequest(r.id)} className="p-2 text-[#2E7D32] hover:bg-[#E8F5E9] rounded-lg transition-all" title="Setujui"><Check size={18} /></button><button onClick={() => handleRejectRequest(r.id)} className="p-2 text-[#B3261E] hover:bg-[#F9DEDC] rounded-lg transition-all" title="Tolak"><X size={18} /></button></div>)}</td>
+                    </tr>
+                  ))}
+                  {requests.length === 0 && <tr><td colSpan={6} className="px-6 py-12 text-center text-[#49454F]">Tidak ada request remedial saat ini.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+            {/* Mobile: Card */}
+            <div className="md:hidden space-y-3">
+              {requests.length === 0 && <div className="bg-white rounded-2xl border border-[#E6E1E5] p-8 text-center text-[#49454F]">Tidak ada request remedial saat ini.</div>}
+              {requests.map((r) => (
+                <div key={r.id} className="bg-white rounded-2xl border border-[#E6E1E5] shadow-sm p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-bold text-[#1C1B1F] text-sm">{r.nama}</p>
+                        <span className={clsx("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase flex-shrink-0", r.status === 'pending' ? "bg-[#FFF8E1] text-[#F57F17]" : r.status === 'approved' ? "bg-[#E8F5E9] text-[#2E7D32]" : "bg-[#F9DEDC] text-[#B3261E]")}>{r.status}</span>
+                      </div>
+                      <p className="text-[10px] text-[#49454F] font-mono mb-1">{r.nik}</p>
+                      <p className="text-xs text-[#49454F]">{r.perusahaan || '-'}</p>
+                      <p className="text-xs text-[#6750A4] font-medium mt-1">{jenisUjian.find(j => j.id === r.jenis_ujian_id)?.nama || 'Unknown'}</p>
+                      <p className="text-[10px] text-[#9CA3AF] mt-1">{format(new Date(r.created_at), 'dd/MM/yyyy HH:mm')}</p>
                     </div>
-                    <p className="text-[10px] text-[#49454F] font-mono mb-1">{r.nik}</p>
-                    <p className="text-xs text-[#49454F]">{r.perusahaan || '-'}</p>
-                    <p className="text-xs text-[#6750A4] font-medium mt-1">{jenisUjian.find(j => j.id === r.jenis_ujian_id)?.nama || 'Unknown'}</p>
-                    <p className="text-[10px] text-[#9CA3AF] mt-1">{format(new Date(r.created_at), 'dd/MM/yyyy HH:mm')}</p>
+                    {r.status === 'pending' && (
+                      <div className="flex flex-col gap-2 flex-shrink-0">
+                        <button onClick={() => handleApproveRequest(r.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E8F5E9] text-[#2E7D32] rounded-xl text-xs font-bold hover:bg-[#C8E6C9]"><Check size={14} /> Setujui</button>
+                        <button onClick={() => handleRejectRequest(r.id)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F9DEDC] text-[#B3261E] rounded-xl text-xs font-bold hover:bg-[#F2B8B5]"><X size={14} /> Tolak</button>
+                      </div>
+                    )}
                   </div>
-                  {r.status === 'pending' && (
-                    <div className="flex flex-col gap-2 flex-shrink-0">
-                      <button onClick={() => handleApproveRequest(r.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E8F5E9] text-[#2E7D32] rounded-xl text-xs font-bold hover:bg-[#C8E6C9] transition-all">
-                        <Check size={14} /> Setujui
-                      </button>
-                      <button onClick={() => handleRejectRequest(r.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F9DEDC] text-[#B3261E] rounded-xl text-xs font-bold hover:bg-[#F2B8B5] transition-all">
-                        <X size={14} /> Tolak
-                      </button>
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
         {activeTab === 'hasil' && (
           <div className="space-y-6">
             {!showHasilDetail ? (
-              <div className="space-y-3">
+              <div>
                 {(() => {
                   const grouped = results.reduce((acc, curr) => {
                     const date = format(new Date(curr.waktu_selesai), 'yyyy-MM-dd');
@@ -1879,30 +1925,62 @@ export const AdminDashboard: React.FC = () => {
                     else acc[key].tidakLulus++;
                     return acc;
                   }, {} as Record<string, any>);
-
                   const summaries = Object.values(grouped).sort((a: any, b: any) => b.date.localeCompare(a.date));
-                  if (summaries.length === 0) return (
-                    <div className="bg-white rounded-2xl border border-[#E6E1E5] p-8 text-center text-[#49454F]">Belum ada data hasil ujian.</div>
-                  );
-                  return summaries.map((summary: any) => (
-                    <button key={`${summary.date}_${summary.jenis_id}`}
-                      className="w-full bg-white rounded-2xl border border-[#E6E1E5] shadow-sm p-4 hover:border-[#6750A4] transition-all text-left group"
-                      onClick={() => { setSelectedHasilJenis(summary.jenis_id); setSelectedHasilDate(summary.date); setShowHasilDetail(true); }}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-[#6750A4] text-sm truncate">{jenisUjian.find(j => j.id === summary.jenis_id)?.nama || 'Ujian Tidak Diketahui'}</p>
-                          <p className="text-xs text-[#49454F] mt-0.5">{format(new Date(summary.date), 'dd MMM yyyy', { locale: id })}</p>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-xs font-bold text-[#1C1B1F] bg-[#F3F0F5] px-2 py-1 rounded-lg">{summary.total}</span>
-                          <span className="text-[10px] font-bold bg-[#E8F5E9] text-[#2E7D32] px-2 py-1 rounded-lg">{summary.lulus} lulus</span>
-                          <span className="text-[10px] font-bold bg-[#F9DEDC] text-[#B3261E] px-2 py-1 rounded-lg">{summary.tidakLulus} gagal</span>
-                          <ChevronRight size={16} className="text-[#CAC4D0] group-hover:text-[#6750A4] transition-colors" />
-                        </div>
+                  const emptyEl = <div className="bg-white rounded-2xl border border-[#E6E1E5] p-8 text-center text-[#49454F]">Belum ada data hasil ujian.</div>;
+                  if (summaries.length === 0) return emptyEl;
+                  return (
+                    <>
+                      {/* PC: Tabel */}
+                      <div className="hidden md:block bg-white rounded-[32px] border border-[#E6E1E5] shadow-sm overflow-hidden">
+                        <table className="w-full text-left border-collapse">
+                          <thead className="bg-[#F3F0F5] text-[#49454F] text-xs uppercase tracking-wider">
+                            <tr>
+                              <th className="px-6 py-4 font-bold">Tanggal</th>
+                              <th className="px-6 py-4 font-bold">Nama Ujian</th>
+                              <th className="px-6 py-4 font-bold text-center">Total</th>
+                              <th className="px-6 py-4 font-bold text-center">Lulus</th>
+                              <th className="px-6 py-4 font-bold text-center">Gagal</th>
+                              <th className="px-6 py-4 font-bold"></th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#E6E1E5]">
+                            {summaries.map((summary: any) => (
+                              <tr key={`${summary.date}_${summary.jenis_id}`} className="hover:bg-[#FDFCFB] cursor-pointer group"
+                                onClick={() => { setSelectedHasilJenis(summary.jenis_id); setSelectedHasilDate(summary.date); setShowHasilDetail(true); }}>
+                                <td className="px-6 py-4 text-sm font-medium">{format(new Date(summary.date), 'dd MMM yyyy', { locale: id })}</td>
+                                <td className="px-6 py-4 text-sm font-bold text-[#6750A4]">{jenisUjian.find(j => j.id === summary.jenis_id)?.nama || 'Ujian Tidak Diketahui'}</td>
+                                <td className="px-6 py-4 text-center font-bold">{summary.total}</td>
+                                <td className="px-6 py-4 text-center"><span className="px-2 py-0.5 rounded-full bg-[#E8F5E9] text-[#2E7D32] text-[10px] font-bold">{summary.lulus}</span></td>
+                                <td className="px-6 py-4 text-center"><span className="px-2 py-0.5 rounded-full bg-[#F9DEDC] text-[#B3261E] text-[10px] font-bold">{summary.tidakLulus}</span></td>
+                                <td className="px-6 py-4 text-right"><ChevronRight size={18} className="text-[#49454F] group-hover:translate-x-1 transition-transform inline" /></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                    </button>
-                  ));
+                      {/* Mobile: Card */}
+                      <div className="md:hidden space-y-3">
+                        {summaries.map((summary: any) => (
+                          <button key={`${summary.date}_${summary.jenis_id}`}
+                            className="w-full bg-white rounded-2xl border border-[#E6E1E5] shadow-sm p-4 hover:border-[#6750A4] transition-all text-left group"
+                            onClick={() => { setSelectedHasilJenis(summary.jenis_id); setSelectedHasilDate(summary.date); setShowHasilDetail(true); }}>
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-[#6750A4] text-sm truncate">{jenisUjian.find(j => j.id === summary.jenis_id)?.nama || 'Ujian Tidak Diketahui'}</p>
+                                <p className="text-xs text-[#49454F] mt-0.5">{format(new Date(summary.date), 'dd MMM yyyy', { locale: id })}</p>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                <span className="text-xs font-bold bg-[#F3F0F5] px-2 py-1 rounded-lg">{summary.total}</span>
+                                <span className="text-[10px] font-bold bg-[#E8F5E9] text-[#2E7D32] px-2 py-1 rounded-lg">{summary.lulus} lulus</span>
+                                <span className="text-[10px] font-bold bg-[#F9DEDC] text-[#B3261E] px-2 py-1 rounded-lg">{summary.tidakLulus} gagal</span>
+                                <ChevronRight size={16} className="text-[#CAC4D0] group-hover:text-[#6750A4]" />
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  );
                 })()}
               </div>
             ) : (
@@ -1941,34 +2019,65 @@ export const AdminDashboard: React.FC = () => {
                     />
                   </div>
                 </div>
-                <div className="p-4 space-y-3">
-                  {results
-                    .filter(r => r.jenis_ujian_id === selectedHasilJenis && format(new Date(r.waktu_selesai), 'yyyy-MM-dd') === selectedHasilDate)
-                    .filter(r => r.nama.toLowerCase().includes(searchTerm.toLowerCase()) || r.nik.includes(searchTerm))
-                    .map((r) => (
-                    <div key={r.id} className="bg-[#FAFAFA] border border-[#E6E1E5] rounded-2xl p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <p className="font-bold text-[#1C1B1F] text-sm">{r.nama}</p>
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase flex-shrink-0 ${r.status_lulus ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>
-                              {r.status_lulus ? (r.profil_data.is_remedial ? 'Lulus Remedial' : 'Lulus') : (r.profil_data.is_remedial ? 'Tidak Lulus Remedial' : 'Tidak Lulus')}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-[#49454F] font-mono">{r.nik}</p>
-                          <p className="text-[10px] text-[#49454F]">{r.perusahaan || peserta.find(p => p.nik === r.nik)?.perusahaan || '-'}</p>
-                          <p className="text-[10px] text-[#9CA3AF] mt-1">{format(new Date(r.waktu_selesai), 'dd MMM yyyy, HH:mm', { locale: id })}</p>
+                <div>
+                  {(() => {
+                    const filtered = results
+                      .filter(r => r.jenis_ujian_id === selectedHasilJenis && format(new Date(r.waktu_selesai), 'yyyy-MM-dd') === selectedHasilDate)
+                      .filter(r => r.nama.toLowerCase().includes(searchTerm.toLowerCase()) || r.nik.includes(searchTerm));
+                    return (
+                      <>
+                        {/* PC: Tabel */}
+                        <div className="hidden md:block overflow-x-auto">
+                          <table className="w-full text-left">
+                            <thead className="bg-[#F3F0F5] text-[#49454F] text-xs uppercase tracking-wider">
+                              <tr>
+                                <th className="px-6 py-4 font-bold">Nama</th>
+                                <th className="px-6 py-4 font-bold">NIK / No.ID</th>
+                                <th className="px-6 py-4 font-bold text-center">Nilai</th>
+                                <th className="px-6 py-4 font-bold">Perusahaan</th>
+                                <th className="px-6 py-4 font-bold text-center">Status</th>
+                                <th className="px-6 py-4 font-bold text-center">Info</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#E6E1E5]">
+                              {filtered.map((r) => (
+                                <tr key={r.id} className="hover:bg-[#FDFCFB]">
+                                  <td className="px-6 py-4"><p className="font-bold text-[#1C1B1F] text-sm">{r.nama}</p><p className="text-[10px] text-[#49454F] mt-0.5">{format(new Date(r.waktu_selesai), 'dd MMM yyyy, HH:mm', { locale: id })}</p></td>
+                                  <td className="px-6 py-4"><p className="text-[10px] text-[#49454F] font-mono">{r.nik}</p></td>
+                                  <td className="px-6 py-4 text-center"><span className={`text-base font-black ${r.nilai >= 70 ? 'text-[#2E7D32]' : 'text-[#B3261E]'}`}>{r.nilai}</span></td>
+                                  <td className="px-6 py-4"><p className="text-xs text-[#49454F]">{r.perusahaan || peserta.find(p => p.nik === r.nik)?.perusahaan || '-'}</p></td>
+                                  <td className="px-6 py-4 text-center"><span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${r.status_lulus ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>{r.status_lulus ? (r.profil_data.is_remedial ? 'Lulus Remedial' : 'Lulus') : (r.profil_data.is_remedial ? 'Tidak Lulus Remedial' : 'Tidak Lulus')}</span></td>
+                                  <td className="px-6 py-4 text-center"><button onClick={() => { setSelectedResultForCheating(r); setShowCheatingModal(true); }} className="p-1.5 text-[#49454F] hover:text-[#6750A4] hover:bg-[#EADDFF] rounded-lg"><FileQuestion size={16} /></button></td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                          <span className={`text-2xl font-black ${r.nilai >= 70 ? 'text-[#2E7D32]' : 'text-[#B3261E]'}`}>{r.nilai}</span>
-                          <button onClick={() => { setSelectedResultForCheating(r); setShowCheatingModal(true); }}
-                            className="p-1.5 text-[#49454F] hover:text-[#6750A4] hover:bg-[#EADDFF] rounded-lg transition-all" title="Lihat Pelanggaran">
-                            <FileQuestion size={16} />
-                          </button>
+                        {/* Mobile: Card */}
+                        <div className="md:hidden p-4 space-y-3">
+                          {filtered.map((r) => (
+                            <div key={r.id} className="bg-[#FAFAFA] border border-[#E6E1E5] rounded-2xl p-4">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <p className="font-bold text-[#1C1B1F] text-sm">{r.nama}</p>
+                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase flex-shrink-0 ${r.status_lulus ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>{r.status_lulus ? (r.profil_data.is_remedial ? 'Lulus Remedial' : 'Lulus') : (r.profil_data.is_remedial ? 'Tidak Lulus Remedial' : 'Tidak Lulus')}</span>
+                                  </div>
+                                  <p className="text-[10px] text-[#49454F] font-mono">{r.nik}</p>
+                                  <p className="text-[10px] text-[#49454F]">{r.perusahaan || peserta.find(p => p.nik === r.nik)?.perusahaan || '-'}</p>
+                                  <p className="text-[10px] text-[#9CA3AF] mt-1">{format(new Date(r.waktu_selesai), 'dd MMM yyyy, HH:mm', { locale: id })}</p>
+                                </div>
+                                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                  <span className={`text-2xl font-black ${r.nilai >= 70 ? 'text-[#2E7D32]' : 'text-[#B3261E]'}`}>{r.nilai}</span>
+                                  <button onClick={() => { setSelectedResultForCheating(r); setShowCheatingModal(true); }} className="p-1.5 text-[#49454F] hover:text-[#6750A4] hover:bg-[#EADDFF] rounded-lg"><FileQuestion size={16} /></button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             )}
