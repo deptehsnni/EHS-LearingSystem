@@ -86,7 +86,7 @@ const LandingConfigEditor: React.FC = () => {
           <h3 className="text-xl font-bold">Tampilan Landing Page</h3>
           <p className="text-sm text-[#49454F] mt-1">Edit judul & deskripsi yang tampil di halaman utama peserta</p>
         </div>
-        {saved && <span className="text-xs font-bold text-[#2E7D32] bg-[#E8F5E9] px-3 py-1.5 rounded-full">✓ Tersimpan</span>}
+        {saved && <span className="text-xs font-bold text-[#2E7D32] bg-[#E8F5E9] px-3 py-1.5 rounded-full">\u2713 Tersimpan</span>}
       </div>
       <div className="space-y-5">
         <div>
@@ -244,7 +244,7 @@ export const AdminDashboard: React.FC = () => {
     if (canvas) {
       const url = canvas.toDataURL('image/png');
       const link = document.createElement('a');
-      link.download = `QR_Ujian_${qrData?.name.replace(/\s+/g, '_')}.png`;
+      link.download = `QR_Ujian_${qrData?.name.replace(/\\s+/g, '_')}.png`;
       link.href = url;
       link.click();
     }
@@ -525,7 +525,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const toggleJenisStatus = async (id: string, currentStatus: boolean) => {
-    // Optimistic update — UI langsung berubah
+    // Optimistic update \u2014 UI langsung berubah
     setJenisUjian(prev => prev.map(j => j.id === id ? { ...j, is_active: !currentStatus } : j));
     try {
       const { error } = await supabase
@@ -836,7 +836,9 @@ export const AdminDashboard: React.FC = () => {
         if (msg.includes('duplicate') || msg.includes('unique')) {
           alert('Gagal: Terdapat NIK duplikat di file. Gunakan fitur ini untuk update data, pastikan NIK sudah terdaftar, atau hapus baris duplikat dari file Excel.');
         } else {
-          alert('Gagal mengunggah data. Pastikan format file sesuai template.\n\nDetail: ' + msg);
+          alert('Gagal mengunggah data. Pastikan format file sesuai template.\
+\
+Detail: ' + msg);
         }
       } finally {
         setLoading(false);
@@ -856,8 +858,6 @@ export const AdminDashboard: React.FC = () => {
         is_approved: true
       }]);
       if (error) throw error;
-
-      // Increment total admin stat if needed, but user didn't ask for it.
       
       setShowAddAdminModal(false);
       setNewAdmin({ username: '', password: '', role: 'admin' });
@@ -1458,7 +1458,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="p-2.5 rounded-xl bg-[#EADDFF]"><BarChart3 size={18} className="text-[#6750A4]" /></div>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                     stats.avgNilai >= 70 ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#FFF8E1] text-[#F57F17]'
-                  }`}>{stats.avgNilai >= 70 ? '✓ Di atas KKM' : '⚠ Di bawah KKM'}</span>
+                  }`}>{stats.avgNilai >= 70 ? '\u2713 Di atas KKM' : '\u26a0 Di bawah KKM'}</span>
                 </div>
                 <div className="mt-3">
                   <h3 className="text-4xl font-black text-[#1C1B1F]">{stats.avgNilai}</h3>
@@ -1477,7 +1477,7 @@ export const AdminDashboard: React.FC = () => {
                     stats.trendLulus < 0 ? 'bg-[#F9DEDC] text-[#B3261E]' :
                     'bg-[#F3F0F5] text-[#49454F]'
                   }`}>
-                    {stats.trendLulus > 0 ? `↑ +${stats.trendLulus}%` : stats.trendLulus < 0 ? `↓ ${stats.trendLulus}%` : '→ Stabil'}
+                    {stats.trendLulus > 0 ? `\u2191 +${stats.trendLulus}%` : stats.trendLulus < 0 ? `\u2193 ${stats.trendLulus}%` : '\u2192 Stabil'}
                   </span>
                 </div>
                 <div className="mt-3">
@@ -1527,7 +1527,7 @@ export const AdminDashboard: React.FC = () => {
                     dashboardConfig.showPieChart ? "lg:col-span-2" : "lg:col-span-3")}>
                   <div className="flex items-center gap-2 mb-1">
                     <div className="w-1 h-5 rounded-full bg-[#6750A4]" />
-                    <h4 className="text-sm font-bold text-[#1C1B1F]">Aktivitas Ujian — Bulan Ini</h4>
+                    <h4 className="text-sm font-bold text-[#1C1B1F]">Aktivitas Ujian \u2014 Bulan Ini</h4>
                   </div>
                   <p className="text-xs text-[#9CA3AF] mb-4 ml-3">Jumlah ujian yang diselesaikan per minggu di bulan berjalan</p>
                   <div className="h-52">
@@ -1555,7 +1555,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   <span className="text-[10px] font-bold text-[#49454F] bg-[#F3F0F5] px-3 py-1 rounded-full">Per Bulan</span>
                 </div>
-                <p className="text-xs text-[#9CA3AF] mb-4 ml-3">Total ujian yang diselesaikan setiap bulan — gunakan untuk melihat pola aktivitas pelatihan sepanjang tahun</p>
+                <p className="text-xs text-[#9CA3AF] mb-4 ml-3">Total ujian yang diselesaikan setiap bulan \u2014 gunakan untuk melihat pola aktivitas pelatihan sepanjang tahun</p>
                 <div className="h-60">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={barChartYearData} barSize={22}>
@@ -1600,7 +1600,7 @@ export const AdminDashboard: React.FC = () => {
                       <td className="px-6 py-4">{Math.abs(j.timer_minutes)} Menit</td>
                       <td className="px-6 py-4"><span className={clsx("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", j.timer_minutes < 0 ? "bg-[#E3F2FD] text-[#1565C0]" : "bg-[#F5F5F5] text-[#757575]")}>{j.timer_minutes < 0 ? 'Ya' : 'Tidak'}</span></td>
                       <td className="px-6 py-4">{j.has_commitment ? <span className="text-[#2E7D32] flex items-center gap-1 text-xs font-medium"><CheckCircle2 size={14} /> Aktif</span> : <span className="text-[#49454F] text-xs">Tidak Ada</span>}</td>
-                      <td className="px-6 py-4"><button onClick={() => toggleJenisStatus(j.id, j.is_active)} className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase cursor-pointer transition-all hover:opacity-80 ${j.is_active ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>{j.is_active ? '🟢 ON' : '🔴 OFF'}</button></td>
+                      <td className="px-6 py-4"><button onClick={() => toggleJenisStatus(j.id, j.is_active)} className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase cursor-pointer transition-all hover:opacity-80 ${j.is_active ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>{j.is_active ? '\ud83d\udfe2 ON' : '\ud83d\udd34 OFF'}</button></td>
                       <td className="px-6 py-4">
                         <div className="flex gap-1">
                           <button onClick={() => copyExamLink(j.id)} className="p-2 text-[#6750A4] hover:bg-[#EADDFF] rounded-lg transition-all" title="Salin Link"><Copy size={18} /></button>
@@ -1627,7 +1627,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-2">
                         <button onClick={() => setViewingQuestionsJenis(j)} className="font-bold text-[#6750A4] hover:underline text-left text-sm leading-tight">{j.nama}</button>
-                        <button onClick={() => toggleJenisStatus(j.id, j.is_active)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase flex-shrink-0 ${j.is_active ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>{j.is_active ? '🟢 ON' : '🔴 OFF'}</button>
+                        <button onClick={() => toggleJenisStatus(j.id, j.is_active)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase flex-shrink-0 ${j.is_active ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>{j.is_active ? '\ud83d\udfe2 ON' : '\ud83d\udd34 OFF'}</button>
                       </div>
                       <div className="flex flex-wrap gap-2 mb-3">
                         <span className="text-[10px] bg-[#F3F0F5] text-[#49454F] px-2 py-0.5 rounded-full">{Math.abs(j.timer_minutes)} menit</span>
@@ -2392,14 +2392,14 @@ export const AdminDashboard: React.FC = () => {
               {/* Sidebar navigasi */}
               <div className="w-52 flex-shrink-0 border-r border-[#E6E1E5] overflow-y-auto bg-[#FDFCFB] p-3 space-y-1">
                 {[
-                  { id: 'alur', icon: '🗺️', label: 'Alur Kerja Admin', sub: 'Mulai dari sini' },
-                  { id: 'dashboard', icon: '📊', label: 'Dashboard', sub: 'Analitik & statistik' },
-                  { id: 'jenis', icon: '📋', label: 'Jenis Ujian', sub: 'Kelola kategori ujian' },
-                  { id: 'peserta', icon: '👥', label: 'Peserta Master', sub: 'Kelola data peserta' },
-                  { id: 'soal', icon: '❓', label: 'Bank Soal', sub: 'Kelola soal ujian' },
-                  { id: 'hasil', icon: '📈', label: 'Hasil Ujian', sub: 'Lihat & ekspor hasil' },
-                  { id: 'remedial', icon: '🔄', label: 'Request Remedial', sub: 'Kelola ujian ulang' },
-                  { id: 'pengaturan', icon: '⚙️', label: 'Pengaturan', sub: 'Sistem & tampilan' },
+                  { id: 'alur', icon: '\ud83d\uddfa\ufe0f', label: 'Alur Kerja Admin', sub: 'Mulai dari sini' },
+                  { id: 'dashboard', icon: '\ud83d\udcca', label: 'Dashboard', sub: 'Analitik & statistik' },
+                  { id: 'jenis', icon: '\ud83d\udccb', label: 'Jenis Ujian', sub: 'Kelola kategori ujian' },
+                  { id: 'peserta', icon: '\ud83d\udc65', label: 'Peserta Master', sub: 'Kelola data peserta' },
+                  { id: 'soal', icon: '\u2753', label: 'Bank Soal', sub: 'Kelola soal ujian' },
+                  { id: 'hasil', icon: '\ud83d\udcc8', label: 'Hasil Ujian', sub: 'Lihat & ekspor hasil' },
+                  { id: 'remedial', icon: '\ud83d\udd04', label: 'Request Remedial', sub: 'Kelola ujian ulang' },
+                  { id: 'pengaturan', icon: '\u2699\ufe0f', label: 'Pengaturan', sub: 'Sistem & tampilan' },
                 ].map(item => (
                   <button key={item.id}
                     onClick={() => setGuidePage(item.id)}
@@ -2425,14 +2425,14 @@ export const AdminDashboard: React.FC = () => {
                 {/* ==================== ALUR KERJA ==================== */}
                 {guidePage === 'alur' && (
                   <div>
-                    <h4 className="text-lg font-black text-[#1C1B1F] mb-1">🗺️ Alur Kerja Admin — Dari Awal Sampai Akhir</h4>
+                    <h4 className="text-lg font-black text-[#1C1B1F] mb-1">\ud83d\uddfa\ufe0f Alur Kerja Admin \u2014 Dari Awal Sampai Akhir</h4>
                     <p className="text-xs text-[#49454F] mb-5">Ikuti langkah-langkah berikut secara berurutan. Jangan lewati satu langkah pun agar sistem berjalan dengan benar.</p>
 
                     <div className="bg-[#EDE7FF] border border-[#6750A4]/20 rounded-xl p-3 mb-5">
-                      <p className="text-xs font-bold text-[#6750A4]">📌 Urutan wajib yang harus diikuti:</p>
+                      <p className="text-xs font-bold text-[#6750A4]">\ud83d\udccc Urutan wajib yang harus diikuti:</p>
                       <div className="flex flex-wrap gap-1.5 mt-2">
-                        {['1. Buat Jenis Ujian','→','2. Masukkan Soal','→','3. Daftarkan Peserta','→','4. Aktifkan Sesi','→','5. Bagikan Link/QR','→','6. Pantau Hasil','→','7. Nonaktifkan Sesi'].map((t,i)=>(
-                          <span key={i} className={t==='→' ? 'text-[#6750A4] font-black text-xs' : 'bg-white text-[#6750A4] font-bold text-[10px] px-2 py-0.5 rounded-lg'}>{t}</span>
+                        {['1. Buat Jenis Ujian','\u2192','2. Masukkan Soal','\u2192','3. Daftarkan Peserta','\u2192','4. Aktifkan Sesi','\u2192','5. Bagikan Link/QR','\u2192','6. Pantau Hasil','\u2192','7. Nonaktifkan Sesi'].map((t,i)=>(
+                          <span key={i} className={t==='\u2192' ? 'text-[#6750A4] font-black text-xs' : 'bg-white text-[#6750A4] font-bold text-[10px] px-2 py-0.5 rounded-lg'}>{t}</span>
                         ))}
                       </div>
                     </div>
@@ -2443,13 +2443,13 @@ export const AdminDashboard: React.FC = () => {
                         items:[
                           'Buka tab "Jenis Ujian" di sidebar kiri',
                           'Klik tombol "+ Tambah Jenis" di pojok kanan atas',
-                          'Isi Nama Jenis Ujian — gunakan nama yang spesifik, contoh: "Induksi K3 Karyawan Baru 2026"',
-                          'Isi Durasi (menit) — waktu yang diberikan untuk mengerjakan ujian, contoh: 30',
-                          'Isi Passing Score — nilai minimum kelulusan, umumnya 70',
-                          'Isi Jumlah Soal Ditampilkan — berapa soal yang muncul per sesi dari total bank soal, contoh: 20',
+                          'Isi Nama Jenis Ujian \u2014 gunakan nama yang spesifik, contoh: "Induksi K3 Karyawan Baru 2026"',
+                          'Isi Durasi (menit) \u2014 waktu yang diberikan untuk mengerjakan ujian, contoh: 30',
+                          'Isi Passing Score \u2014 nilai minimum kelulusan, umumnya 70',
+                          'Isi Jumlah Soal Ditampilkan \u2014 berapa soal yang muncul per sesi dari total bank soal, contoh: 20',
                           'Centang "Limit 1x/Hari" jika peserta hanya boleh mengerjakan sekali per hari',
                           'Centang "Pakta Integritas" jika peserta harus setuju pernyataan sebelum mulai',
-                          'Klik Simpan — jenis ujian terbuat dengan status NONAKTIF (OFF)',
+                          'Klik Simpan \u2014 jenis ujian terbuat dengan status NONAKTIF (OFF)',
                           'Biarkan NONAKTIF dulu sampai soal dan peserta siap semua',
                         ],
                         warn:'Jangan aktifkan sesi sebelum soal dan peserta selesai dimasukkan!'
@@ -2462,9 +2462,9 @@ export const AdminDashboard: React.FC = () => {
                           'Pilih jenis ujian yang sesuai dari daftar',
                           'Siapkan file Excel dengan format: Pertanyaan | Pilihan A | Pilihan B | Pilihan C | Pilihan D | Jawaban (A/B/C/D)',
                           'Di grid spreadsheet, klik sel pertama kolom Pertanyaan lalu tekan Ctrl+V',
-                          'Sistem otomatis mendeteksi kunci jawaban — periksa tombol A/B/C/D yang menyala hijau',
+                          'Sistem otomatis mendeteksi kunci jawaban \u2014 periksa tombol A/B/C/D yang menyala hijau',
                           'Koreksi kunci jawaban jika perlu dengan klik tombol A/B/C/D di kolom Kunci Jawaban',
-                          'Cek angka "baris valid" di footer — hanya baris lengkap yang tersimpan',
+                          'Cek angka "baris valid" di footer \u2014 hanya baris lengkap yang tersimpan',
                           'Klik "Simpan Semua"',
                           'Tips: Masukkan minimal 2x jumlah soal yang ditampilkan (misal: tampilkan 20, masukkan minimal 40 soal)',
                         ],
@@ -2477,10 +2477,10 @@ export const AdminDashboard: React.FC = () => {
                           'Klik "Input via Spreadsheet" untuk input massal',
                           'Pilih jenis pelatihan yang sesuai',
                           'Di grid, klik sel NIK baris pertama lalu tekan Ctrl+V dari Excel',
-                          'Data mengisi otomatis: NIK → Nama → Perusahaan → Kategori',
+                          'Data mengisi otomatis: NIK \u2192 Nama \u2192 Perusahaan \u2192 Kategori secara berurutan',
                           'Untuk ubah kategori banyak peserta: klik nomor baris + drag untuk blok selection',
                           'Setelah baris dipilih (highlight ungu), klik tombol kategori di action bar atas',
-                          'Cek "baris valid" — NIK, Nama, dan Perusahaan harus terisi',
+                          'Cek "baris valid" \u2014 NIK, Nama, dan Perusahaan harus terisi',
                           'Klik "Simpan Semua"',
                         ],
                         warn:'NIK harus unik. Jika NIK sudah ada, data akan ter-overwrite (update), bukan duplikat.'
@@ -2490,13 +2490,13 @@ export const AdminDashboard: React.FC = () => {
                         items:[
                           'Kembali ke tab "Jenis Ujian"',
                           'Cari jenis ujian yang sudah siap',
-                          'Klik tombol "🔴 OFF" — tombol berubah jadi "🟢 ON"',
-                          'Sesi sekarang aktif — peserta dapat login',
-                          'Bagikan link ujian: klik ikon 🔗 untuk salin URL',
+                          'Klik tombol "\ud83d\udd34 OFF" \u2014 tombol berubah jadi "\ud83d\udfe2 ON"',
+                          'Sesi sekarang aktif \u2014 peserta dapat login',
+                          'Bagikan link ujian: klik ikon \ud83d\udd17 untuk salin URL',
                           'Atau tampilkan QR Code: klik ikon QR untuk peserta scan langsung',
                           'Pastikan peserta menggunakan NIK yang sudah terdaftar',
                         ],
-                        warn:'Jangan aktifkan sesi terlalu awal atau terlalu lama — nonaktifkan segera setelah sesi selesai.'
+                        warn:'Jangan aktifkan sesi terlalu awal atau terlalu lama \u2014 nonaktifkan segera setelah sesi selesai.'
                       },
                       { step:'5', title:'Pantau Hasil Ujian', tab:'Hasil Ujian', color:'#F57F17', bg:'#FFF8E1',
                         desc:'Lihat perkembangan hasil secara real-time. Setiap peserta yang selesai ujian langsung muncul di halaman Hasil Ujian.',
@@ -2505,7 +2505,7 @@ export const AdminDashboard: React.FC = () => {
                           'Data dikelompokkan per tanggal dan jenis ujian',
                           'Klik baris untuk melihat detail nilai per peserta',
                           'Perhatikan kolom Status: Lulus / Tidak Lulus / Lulus Remedial / Tidak Lulus Remedial',
-                          'Klik ikon 📋 pada tiap peserta untuk melihat catatan kecurangan (tab switching, screenshot, copy)',
+                          'Klik ikon \ud83d\udccb pada tiap peserta untuk melihat catatan kecurangan (tab switching, screenshot, copy)',
                           'Jika ada request remedial: buka tab "Request Remedial" dan proses permintaan',
                           'Setelah semua selesai, klik "Export Excel" untuk backup data ke file',
                         ],
@@ -2514,10 +2514,10 @@ export const AdminDashboard: React.FC = () => {
                       { step:'6', title:'Nonaktifkan & Siapkan Sesi Berikutnya', tab:'Jenis Ujian', color:'#B3261E', bg:'#F9DEDC',
                         desc:'Setelah sesi training selesai, nonaktifkan ujian dan bersihkan data peserta untuk training berikutnya.',
                         items:[
-                          'Kembali ke tab "Jenis Ujian" dan klik "🟢 ON" → menjadi "🔴 OFF"',
-                          'Ekspor hasil ujian ke Excel terlebih dahulu (tab Hasil Ujian → Export Excel)',
-                          'Buka tab "Peserta Master" — hapus peserta lama atau ganti dengan peserta baru',
-                          'Data hasil ujian TIDAK ikut terhapus — tetap tersimpan permanen',
+                          'Kembali ke tab "Jenis Ujian" dan klik "\ud83d\udfe2 ON" \u2192 menjadi "\ud83d\udd34 OFF"',
+                          'Ekspor hasil ujian ke Excel terlebih dahulu (tab Hasil Ujian \u2192 Export Excel)',
+                          'Buka tab "Peserta Master" \u2014 hapus peserta lama atau ganti dengan peserta baru',
+                          'Data hasil ujian TIDAK ikut terhapus \u2014 tetap tersimpan permanen',
                           'Untuk sesi training berikutnya: ulangi langkah 3 (Daftarkan Peserta) s/d 5',
                           'Jika soal ingin diperbarui: buka tab "Bank Soal" dan tambah/hapus soal sesuai kebutuhan',
                         ],
@@ -2531,7 +2531,7 @@ export const AdminDashboard: React.FC = () => {
                         <div className="flex-1 pb-5 border-b border-[#F3F0F5]">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <p className="font-black text-[#1C1B1F]">{s.title}</p>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{background:s.bg,color:s.color}}>→ Tab: {s.tab}</span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{background:s.bg,color:s.color}}>\u2192 Tab: {s.tab}</span>
                           </div>
                           <p className="text-xs text-[#49454F] mb-2 leading-relaxed">{s.desc}</p>
                           <ul className="space-y-1 mb-2">
@@ -2544,7 +2544,7 @@ export const AdminDashboard: React.FC = () => {
                           </ul>
                           {s.warn && (
                             <div className="flex items-start gap-2 bg-[#FFF8E1] border border-[#FFE082] rounded-lg px-3 py-2 mt-2">
-                              <span className="text-sm flex-shrink-0">⚠️</span>
+                              <span className="text-sm flex-shrink-0">\u26a0\ufe0f</span>
                               <p className="text-[10px] font-bold text-[#F57F17]">{s.warn}</p>
                             </div>
                           )}
@@ -2558,38 +2558,38 @@ export const AdminDashboard: React.FC = () => {
                 {guidePage === 'dashboard' && (
                   <div className="space-y-5">
                     <div>
-                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">📊 Dashboard Analitik</h4>
+                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">\ud83d\udcca Dashboard Analitik</h4>
                       <p className="text-xs text-[#49454F] leading-relaxed">Halaman utama yang menampilkan ringkasan statistik seluruh aktivitas ujian. Data diperbarui otomatis setiap ada ujian selesai. Gunakan dashboard sebagai bahan laporan harian atau evaluasi program training.</p>
                     </div>
                     <div className="bg-[#EDE7FF] border border-[#6750A4]/20 rounded-xl p-3">
-                      <p className="text-xs font-bold text-[#6750A4]">💡 Cara membaca dashboard secara efektif:</p>
-                      <p className="text-xs text-[#6750A4] mt-1">Selalu gunakan filter "Jenis Ujian" terlebih dahulu untuk melihat data per program training, bukan semua data sekaligus — hasilnya lebih akurat untuk pelaporan.</p>
+                      <p className="text-xs font-bold text-[#6750A4]">\ud83d\udca1 Cara membaca dashboard secara efektif:</p>
+                      <p className="text-xs text-[#6750A4] mt-1">Selalu gunakan filter "Jenis Ujian" terlebih dahulu untuk melihat data per program training, bukan semua data sekaligus \u2014 hasilnya lebih akurat untuk pelaporan.</p>
                     </div>
                     {[
-                      { icon:'🔽', title:'Filter Jenis Ujian', color:'#6750A4', bg:'#EDE7FF',
+                      { icon:'\ud83d\udd3d', title:'Filter Jenis Ujian', color:'#6750A4', bg:'#EDE7FF',
                         desc:'Dropdown di pojok kanan hero banner. Pilih jenis ujian tertentu untuk memfilter SEMUA statistik dan grafik sesuai jenis ujian tersebut. Subtitle banner akan berubah menunjukkan filter yang aktif. Pilih "Semua Jenis Ujian" untuk data keseluruhan.',
                         tips:['Filter mempengaruhi semua 4 metric card sekaligus','Berguna saat ada beberapa program training berbeda dalam satu sistem','Gunakan filter saat membuat laporan per program']},
-                      { icon:'👥', title:'Total Peserta Training', color:'#6750A4', bg:'#EDE7FF',
-                        desc:'Jumlah total seluruh peserta yang telah menyelesaikan ujian (semua attempt/pengerjaan). Angka ini digunakan sebagai asumsi jumlah total peserta yang sudah mengikuti training — karena data peserta master selalu diperbarui setiap sesi, angka ini lebih akurat sebagai acuan historis.',
+                      { icon:'\ud83d\udc65', title:'Total Peserta Training', color:'#6750A4', bg:'#EDE7FF',
+                        desc:'Jumlah total seluruh peserta yang telah menyelesaikan ujian (semua attempt/pengerjaan). Angka ini digunakan sebagai asumsi jumlah total peserta yang sudah mengikuti training \u2014 karena data peserta master selalu diperbarui setiap sesi, angka ini lebih akurat sebagai acuan historis.',
                         tips:['Angka ini terus bertambah setiap kali ada peserta selesai ujian','Tidak berkurang meskipun data peserta master dihapus','Termasuk attempt remedial']},
-                      { icon:'✅', title:'Tingkat Kelulusan (%)', color:'#2E7D32', bg:'#E8F5E9',
-                        desc:'Persentase peserta yang lulus dibagi total peserta yang mengerjakan. Badge "Baik" muncul jika ≥70%, badge "Perlu Perhatian" (merah) jika di bawah 70%. Progress bar di bawah angka menunjukkan pencapaian secara visual.',
-                        tips:['Jika tingkat kelulusan rendah, tinjau ulang materi training atau tingkat kesulitan soal','Hitung secara otomatis dari seluruh data sesuai filter','Target ideal: ≥80% untuk program K3 yang efektif']},
-                      { icon:'🎯', title:'Rata-rata Nilai Ujian', color:'#6750A4', bg:'#EDE7FF',
-                        desc:'Nilai rata-rata dari seluruh peserta yang mengerjakan ujian. Badge "Di atas KKM" muncul jika rata-rata ≥70, badge "Di bawah KKM" (kuning) jika di bawah 70.',
+                      { icon:'\u2705', title:'Tingkat Kelulusan (%)', color:'#2E7D32', bg:'#E8F5E9',
+                        desc:'Persentase peserta yang lulus dibagi total peserta yang mengerjakan. Badge "Baik" muncul jika \u226570%, badge "Perlu Perhatian" (merah) jika di bawah 70%. Progress bar di bawah angka menunjukkan pencapaian secara visual.',
+                        tips:['Jika tingkat kelulusan rendah, tinjau ulang materi training atau tingkat kesulitan soal','Hitung secara otomatis dari seluruh data sesuai filter','Target ideal: \u226580% untuk program K3 yang efektif']},
+                      { icon:'\ud83c\udfaf', title:'Rata-rata Nilai Ujian', color:'#6750A4', bg:'#EDE7FF',
+                        desc:'Nilai rata-rata dari seluruh peserta yang mengerjakan ujian. Badge "Di atas KKM" muncul jika rata-rata \u226570, badge "Di bawah KKM" (kuning) jika di bawah 70.',
                         tips:['Jika rata-rata rendah, pertimbangkan menambah soal yang lebih mudah di bank soal','Atau tinjau ulang apakah materi training sudah mencakup topik yang diujikan','KKM default sistem adalah 70 sesuai passing score']},
-                      { icon:'📅', title:'Ujian Bulan Ini + Tren', color:'#F57F17', bg:'#FFF8E1',
-                        desc:'Jumlah ujian yang diselesaikan di bulan berjalan. Badge tren menunjukkan perbandingan dengan bulan lalu: ↑ naik (hijau), ↓ turun (merah), → stabil (abu-abu).',
+                      { icon:'\ud83d\udcc5', title:'Ujian Bulan Ini + Tren', color:'#F57F17', bg:'#FFF8E1',
+                        desc:'Jumlah ujian yang diselesaikan di bulan berjalan. Badge tren menunjukkan perbandingan dengan bulan lalu: \u2191 naik (hijau), \u2193 turun (merah), \u2192 stabil (abu-abu).',
                         tips:['Berguna untuk monitoring aktivitas training bulanan','Gunakan sebagai KPI jumlah peserta training yang ditargetkan']},
-                      { icon:'🥧', title:'Distribusi Kategori Peserta', color:'#6750A4', bg:'#EDE7FF',
+                      { icon:'\ud83e\udd67', title:'Distribusi Kategori Peserta', color:'#6750A4', bg:'#EDE7FF',
                         desc:'Pie chart yang memecah peserta berdasarkan kategori: Karyawan, Kontraktor, Visitor, Magang. Arahkan kursor ke irisan untuk melihat jumlah detail. Angka di dalam legend menunjukkan jumlah peserta per kategori.',
-                        tips:['Berguna untuk laporan breakdown peserta per kategori','Aktif/nonaktif melalui ⚙️ Pengaturan Dashboard']},
-                      { icon:'📊', title:'Grafik Aktivitas (Bulanan & Tahunan)', color:'#006A6A', bg:'#E0F2F1',
-                        desc:'Dua bar chart: (1) Aktivitas minggu ini / bulan berjalan — per minggu. (2) Tren sepanjang tahun — per bulan. Arahkan kursor ke batang untuk melihat jumlah ujian yang tepat.',
-                        tips:['Gunakan grafik tahunan untuk melihat bulan puncak aktivitas training','Aktif/nonaktif masing-masing chart melalui ⚙️ Pengaturan Dashboard']},
-                      { icon:'⚙️', title:'Pengaturan Dashboard', color:'#49454F', bg:'#F3F0F5',
-                        desc:'Klik ikon ⚙️ di pojok kanan hero banner. Anda dapat menyembunyikan atau menampilkan kembali chart tertentu sesuai kebutuhan tampilan dashboard.',
-                        tips:['Pengaturan tersimpan per sesi — akan kembali ke default saat halaman di-refresh']},
+                        tips:['Berguna untuk laporan breakdown peserta per kategori','Aktif/nonaktif melalui \u2699\ufe0f Pengaturan Dashboard']},
+                      { icon:'\ud83d\udcca', title:'Grafik Aktivitas (Bulanan & Tahunan)', color:'#006A6A', bg:'#E0F2F1',
+                        desc:'Dua bar chart: (1) Aktivitas minggu ini / bulan berjalan \u2014 per minggu. (2) Tren sepanjang tahun \u2014 per bulan. Arahkan kursor ke batang untuk melihat jumlah ujian yang tepat.',
+                        tips:['Gunakan grafik tahunan untuk melihat bulan puncak aktivitas training','Aktif/nonaktif masing-masing chart melalui \u2699\ufe0f Pengaturan Dashboard']},
+                      { icon:'\u2699\ufe0f', title:'Pengaturan Dashboard', color:'#49454F', bg:'#F3F0F5',
+                        desc:'Klik ikon \u2699\ufe0f di pojok kanan hero banner. Anda dapat menyembunyikan atau menampilkan kembali chart tertentu sesuai kebutuhan tampilan dashboard.',
+                        tips:['Pengaturan tersimpan per sesi \u2014 akan kembali ke default saat halaman di-refresh']},
                     ].map((item,i)=>(
                       <div key={i} className="border border-[#E6E1E5] rounded-2xl p-4">
                         <div className="flex items-center gap-2 mb-2">
@@ -2601,7 +2601,7 @@ export const AdminDashboard: React.FC = () => {
                         <div className="space-y-1">
                           {item.tips.map((t,j)=>(
                             <div key={j} className="flex items-start gap-1.5">
-                              <span className="text-[#006A6A] text-[10px] flex-shrink-0 mt-0.5">•</span>
+                              <span className="text-[#006A6A] text-[10px] flex-shrink-0 mt-0.5">\u2022</span>
                               <p className="text-[10px] text-[#49454F]">{t}</p>
                             </div>
                           ))}
@@ -2615,7 +2615,7 @@ export const AdminDashboard: React.FC = () => {
                 {guidePage === 'jenis' && (
                   <div className="space-y-5">
                     <div>
-                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">📋 Manajemen Jenis Ujian</h4>
+                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">\ud83d\udccb Manajemen Jenis Ujian</h4>
                       <p className="text-xs text-[#49454F] leading-relaxed">Jenis ujian adalah fondasi sistem. Semua soal, peserta, dan hasil terikat ke jenis ujian. Buat ini terlebih dahulu sebelum apapun.</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -2634,19 +2634,19 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                     {[
                       { title:'Membuat Jenis Ujian Baru', color:'#6750A4',
-                        steps:['Klik "+ Tambah Jenis" di pojok kanan atas','Isi semua field yang diperlukan (lihat tabel di atas)','Centang "Limit 1x/Hari" — peserta hanya bisa mengerjakan sekali per hari (termasuk sesi remedial)','Centang "Pakta Integritas" — peserta harus setuju pakta sebelum mulai ujian','Klik Simpan — jenis ujian tersimpan dengan status NONAKTIF',
+                        steps:['Klik "+ Tambah Jenis" di pojok kanan atas','Isi semua field yang diperlukan (lihat tabel di atas)','Centang "Limit 1x/Hari" \u2014 peserta hanya bisa mengerjakan sekali per hari (termasuk sesi remedial)','Centang "Pakta Integritas" \u2014 peserta harus setuju pakta sebelum mulai ujian','Klik Simpan \u2014 jenis ujian tersimpan dengan status NONAKTIF',
                         'PENTING: Biarkan NONAKTIF sampai soal dan peserta siap'] },
                       { title:'Mengaktifkan dan Menonaktifkan Sesi', color:'#2E7D32',
-                        steps:['Klik tombol "🔴 OFF" → berubah "🟢 ON" — sesi aktif, peserta dapat login','Klik "🟢 ON" → berubah "🔴 OFF" — sesi nonaktif, peserta tidak dapat masuk','Perubahan berlaku INSTAN — peserta yang sedang mengerjakan tidak terdampak','Peserta yang belum submit saat sesi dinonaktifkan: jawaban tidak bisa dikirim dan muncul notifikasi','Selalu nonaktifkan sesi setelah training selesai'] },
+                        steps:['Klik tombol "\ud83d\udd34 OFF" \u2192 berubah "\ud83d\udfe2 ON" \u2014 sesi aktif, peserta dapat login','Klik "\ud83d\udfe2 ON" \u2192 berubah "\ud83d\udd34 OFF" \u2014 sesi nonaktif, peserta tidak dapat masuk','Perubahan berlaku INSTAN \u2014 peserta yang sedang mengerjakan tidak terdampak','Peserta yang belum submit saat sesi dinonaktifkan: jawaban tidak bisa dikirim dan muncul notifikasi','Selalu nonaktifkan sesi setelah training selesai'] },
                       { title:'Menyebarkan Link dan QR Code', color:'#1565C0',
-                        steps:['Klik ikon 🔗 (Salin Link) — URL ujian langsung tersalin ke clipboard','Bagikan URL via WhatsApp, email, atau tampilkan di layar','Klik ikon QR — tampil QR Code besar yang bisa di-scan peserta','QR Code sudah terhubung ke jenis ujian spesifik — peserta langsung ke ujian yang benar','Tips: cetak QR Code dan tempel di meja registrasi untuk akses cepat'] },
+                        steps:['Klik ikon \ud83d\udd17 (Salin Link) \u2014 URL ujian langsung tersalin ke clipboard','Bagikan URL via WhatsApp, email, atau tampilkan di layar','Klik ikon QR \u2014 tampil QR Code besar yang bisa di-scan peserta','QR Code sudah terhubung ke jenis ujian spesifik \u2014 peserta langsung ke ujian yang benar','Tips: cetak QR Code dan tempel di meja registrasi untuk akses cepat'] },
                       { title:'Mengedit Jenis Ujian yang Sudah Ada', color:'#F57F17',
-                        steps:['Klik ikon ⚙️ (Settings) di kolom Aksi','Ubah pengaturan yang diperlukan','Klik Simpan Perubahan','Perubahan berlaku segera — termasuk durasi dan passing score untuk sesi yang belum dimulai'] },
+                        steps:['Klik ikon \u2699\ufe0f (Settings) di kolom Aksi','Ubah pengaturan yang diperlukan','Klik Simpan Perubahan','Perubahan berlaku segera \u2014 termasuk durasi dan passing score untuk sesi yang belum dimulai'] },
                       { title:'Menghapus Jenis Ujian', color:'#B3261E',
                         steps:['Centang checkbox di kiri baris yang ingin dihapus (bisa pilih banyak)','Klik tombol "Hapus Terpilih" di header','Konfirmasi penghapusan','PERINGATAN KERAS: Menghapus jenis ujian akan PERMANEN menghapus SEMUA soal dan hasil ujian yang terkait. Ekspor data terlebih dahulu!'] },
                     ].map((item,i)=>(
                       <div key={i} className="border border-[#E6E1E5] rounded-2xl p-4">
-                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">📌 {item.title}</p>
+                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">\ud83d\udccc {item.title}</p>
                         <ol className="space-y-1.5">
                           {item.steps.map((s,j)=>(
                             <li key={j} className="flex items-start gap-2 text-xs text-[#49454F]">
@@ -2658,17 +2658,17 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
-                      <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
+                      <p className="text-sm font-black text-[#1C1B1F] mb-3">\ud83d\udee0\ufe0f Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
                         {[
-                          {icon:'➕', label:'+ Tambah Jenis', desc:'Buat jenis ujian baru. Klik → isi form → Simpan. Jenis ujian baru otomatis NONAKTIF.'},
-                          {icon:'🟢🔴', label:'Toggle ON/OFF', desc:'Aktifkan/nonaktifkan sesi ujian. Klik tombol status untuk toggle. Perubahan instan — peserta yang sedang ujian tidak terdampak, namun tidak bisa submit jika dinonaktifkan.'},
-                          {icon:'🔗', label:'Salin Link (ikon rantai)', desc:'Salin URL ujian ke clipboard. Bagikan via WhatsApp/email. Link sudah mengandung kode jenis ujian — peserta langsung ke ujian yang benar.'},
+                          {icon:'\u2795', label:'+ Tambah Jenis', desc:'Buat jenis ujian baru. Klik \u2192 isi form \u2192 Simpan. Jenis ujian baru otomatis NONAKTIF.'},
+                          {icon:'\ud83d\udfe2\ud83d\udd34', label:'Toggle ON/OFF', desc:'Aktifkan/nonaktifkan sesi ujian. Klik tombol status untuk toggle. Perubahan instan \u2014 peserta yang sedang ujian tidak terdampak, namun tidak bisa submit jika dinonaktifkan.'},
+                          {icon:'\ud83d\udd17', label:'Salin Link (ikon rantai)', desc:'Salin URL ujian ke clipboard. Bagikan via WhatsApp/email. Link sudah mengandung kode jenis ujian \u2014 peserta langsung ke ujian yang benar.'},
                           {icon:'QR', label:'QR Code (ikon QR)', desc:'Tampilkan QR Code besar yang bisa di-scan peserta. Cocok untuk ditempel di meja registrasi atau ditayangkan di layar proyektor.'},
-                          {icon:'⚙️', label:'Edit (ikon settings)', desc:'Edit nama, durasi, passing score, jumlah soal, dan pengaturan lainnya. Perubahan berlaku segera.'},
-                          {icon:'🗑️', label:'Hapus (ikon tempat sampah)', desc:'Hapus jenis ujian beserta SEMUA soal dan hasil ujian terkait. TIDAK BISA DIBATALKAN. Ekspor data terlebih dahulu.'},
-                          {icon:'☑️', label:'Checkbox + Hapus Terpilih', desc:'Centang satu atau beberapa jenis ujian → klik "Hapus Terpilih" di header untuk hapus massal.'},
-                          {icon:'📖', label:'Klik Nama Jenis Ujian', desc:'Klik nama jenis ujian (teks ungu) untuk melihat daftar soal yang terkait dengan jenis ujian tersebut.'},
+                          {icon:'\u2699\ufe0f', label:'Edit (ikon settings)', desc:'Edit nama, durasi, passing score, jumlah soal, dan pengaturan lainnya. Perubahan berlaku segera.'},
+                          {icon:'\ud83d\uddd1\ufe0f', label:'Hapus (ikon tempat sampah)', desc:'Hapus jenis ujian beserta SEMUA soal dan hasil ujian terkait. TIDAK BISA DIBATALKAN. Ekspor data terlebih dahulu.'},
+                          {icon:'\u2611\ufe0f', label:'Checkbox + Hapus Terpilih', desc:'Centang satu atau beberapa jenis ujian \u2192 klik "Hapus Terpilih" di header untuk hapus massal.'},
+                          {icon:'\ud83d\udcd6', label:'Klik Nama Jenis Ujian', desc:'Klik nama jenis ujian (teks ungu) untuk melihat daftar soal yang terkait dengan jenis ujian tersebut.'},
                         ].map((t,i)=>(
                           <div key={i} className="flex items-start gap-3 py-2 border-b border-[#E6E1E5] last:border-0">
                             <span className="text-base w-8 flex-shrink-0 text-center">{t.icon}</span>
@@ -2687,31 +2687,31 @@ export const AdminDashboard: React.FC = () => {
                 {guidePage === 'peserta' && (
                   <div className="space-y-5">
                     <div>
-                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">👥 Manajemen Peserta Master</h4>
+                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">\ud83d\udc65 Manajemen Peserta Master</h4>
                       <p className="text-xs text-[#49454F] leading-relaxed">Data peserta menentukan siapa yang bisa login ke sistem ujian. Peserta hanya bisa masuk jika NIK-nya terdaftar. Data peserta bisa diganti setiap sesi training tanpa kehilangan data hasil ujian historis.</p>
                     </div>
                     <div className="flex gap-3">
                       <div className="flex-1 bg-[#E8F5E9] border border-[#A5D6A7] rounded-xl p-3">
-                        <p className="text-[10px] font-bold text-[#2E7D32]">✅ Yang TIDAK terhapus saat peserta dihapus:</p>
+                        <p className="text-[10px] font-bold text-[#2E7D32]">\u2705 Yang TIDAK terhapus saat peserta dihapus:</p>
                         <p className="text-[10px] text-[#2E7D32] mt-1">Data hasil ujian, nilai, dan catatan kecurangan tetap tersimpan permanen.</p>
                       </div>
                       <div className="flex-1 bg-[#FFF8E1] border border-[#FFE082] rounded-xl p-3">
-                        <p className="text-[10px] font-bold text-[#F57F17]">⚠️ Perhatikan:</p>
+                        <p className="text-[10px] font-bold text-[#F57F17]">\u26a0\ufe0f Perhatikan:</p>
                         <p className="text-[10px] text-[#F57F17] mt-1">NIK harus unik. Jika NIK sudah ada, data ter-update (bukan duplikat).</p>
                       </div>
                     </div>
                     {[
-                      { title:'Input via Spreadsheet — Cara Paling Efisien', color:'#1565C0',
+                      { title:'Input via Spreadsheet \u2014 Cara Paling Efisien', color:'#1565C0',
                         steps:[
                           'Klik tombol hijau "Input via Spreadsheet" di pojok kanan atas',
                           'Pilih jenis pelatihan yang sesuai dari daftar',
                           'Siapkan data di Excel: kolom NIK | Nama | Perusahaan | Kategori (opsional)',
                           'Di grid, klik sel NIK pada baris pertama yang ingin diisi',
-                          'Tekan Ctrl+V — data Excel otomatis tertempel mulai dari kolom NIK ke kanan',
-                          'Sistem mengisi: NIK → Nama → Perusahaan → Kategori secara berurutan',
+                          'Tekan Ctrl+V \u2014 data Excel otomatis tertempel mulai dari kolom NIK ke kanan',
+                          'Sistem mengisi: NIK \u2192 Nama \u2192 Perusahaan \u2192 Kategori secara berurutan',
                           'Paste bisa dimulai dari kolom MANAPUN (NIK, Nama, Perusahaan)',
-                          'Cek angka "baris valid" di footer — hanya baris dengan NIK+Nama+Perusahaan terisi yang tersimpan',
-                          'Klik "Simpan Semua" — data langsung masuk ke database',
+                          'Cek angka "baris valid" di footer \u2014 hanya baris dengan NIK+Nama+Perusahaan terisi yang tersimpan',
+                          'Klik "Simpan Semua" \u2014 data langsung masuk ke database',
                         ]},
                       { title:'Block Selection untuk Ubah Kategori Massal', color:'#6750A4',
                         steps:[
@@ -2723,12 +2723,12 @@ export const AdminDashboard: React.FC = () => {
                           'Baris terpilih berubah warna UNGU sebagai visual feedback',
                           'Action bar muncul di atas grid: klik tombol Karyawan/Magang/Visitor/Kontraktor untuk ubah kategori semua baris terpilih sekaligus',
                           'Klik "Hapus X baris" untuk menghapus semua baris terpilih sekaligus',
-                          'Klik "✕ Batal" untuk membatalkan seleksi',
+                          'Klik "\u2715 Batal" untuk membatalkan seleksi',
                         ]},
                       { title:'Tambah Peserta Manual (Satu per Satu)', color:'#1565C0',
                         steps:[
                           'Klik "+ Tambah Peserta" di pojok kanan atas',
-                          'Isi NIK / No. ID Karyawan — harus unik di seluruh sistem',
+                          'Isi NIK / No. ID Karyawan \u2014 harus unik di seluruh sistem',
                           'Isi Nama Lengkap sesuai data resmi',
                           'Isi Perusahaan / instansi peserta',
                           'Pilih Kategori: Karyawan, Magang, Visitor, atau Kontraktor',
@@ -2749,21 +2749,21 @@ export const AdminDashboard: React.FC = () => {
                           'Klik nama jenis ujian di bagian atas untuk filter peserta per jenis ujian',
                           'Klik "Semua Peserta" untuk tampilkan seluruh peserta tanpa filter',
                           'Gunakan kolom pencarian untuk cari berdasarkan NIK atau Nama',
-                          'Klik ikon 🗑️ untuk hapus satu peserta',
+                          'Klik ikon \ud83d\uddd1\ufe0f untuk hapus satu peserta',
                           'Centang beberapa baris lalu klik "Hapus Terpilih" untuk hapus massal',
-                          'Peserta yang dihapus tidak bisa login lagi — data hasil ujiannya tetap ada',
+                          'Peserta yang dihapus tidak bisa login lagi \u2014 data hasil ujiannya tetap ada',
                         ]},
-                      { title:'Fitur Keamanan Peserta — 1 Akun 1 Perangkat', color:'#B3261E',
+                      { title:'Fitur Keamanan Peserta \u2014 1 Akun 1 Perangkat', color:'#B3261E',
                         steps:[
                           'Setiap NIK hanya bisa aktif di 1 perangkat sekaligus',
-                          'Jika peserta mencoba login dari perangkat kedua → DITOLAK dengan pesan error di halaman login',
+                          'Jika peserta mencoba login dari perangkat kedua \u2192 DITOLAK dengan pesan error di halaman login',
                           'Perangkat pertama tidak terganggu dan sesi tetap berlanjut',
                           'Sesi dianggap berakhir jika peserta logout atau tidak ada aktivitas >2 menit',
                           'Setelah sesi berakhir, NIK yang sama bisa login dari perangkat lain',
                         ]},
                     ].map((item,i)=>(
                       <div key={i} className="border border-[#E6E1E5] rounded-2xl p-4">
-                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">📌 {item.title}</p>
+                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">\ud83d\udccc {item.title}</p>
                         <ol className="space-y-1.5">
                           {item.steps.map((s,j)=>(
                             <li key={j} className="flex items-start gap-2 text-xs text-[#49454F]">
@@ -2775,21 +2775,21 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
-                      <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
+                      <p className="text-sm font-black text-[#1C1B1F] mb-3">\ud83d\udee0\ufe0f Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
                         {[
-                          {icon:'📊', label:'Input via Spreadsheet (tombol hijau)', desc:'Cara tercepat untuk input massal. Klik → pilih jenis pelatihan → paste data dari Excel langsung ke grid. Paste bisa di kolom NIK, Nama, atau Perusahaan.'},
-                          {icon:'🖱️', label:'Klik Nomor Baris (block select)', desc:'Klik nomor di kolom paling kiri untuk pilih baris. Drag ke bawah untuk pilih banyak baris sekaligus. Shift+klik untuk range. Ctrl+klik untuk toggle satu baris.'},
-                          {icon:'🏷️', label:'Tombol Kategori (Karyawan/Magang/dll)', desc:'Muncul di action bar ungu saat ada baris terpilih. Klik satu tombol untuk ubah kategori SEMUA baris terpilih sekaligus — tidak perlu satu per satu.'},
-                          {icon:'🗑️', label:'Hapus X baris (di action bar)', desc:'Muncul saat ada baris terpilih. Hapus semua baris yang dipilih sekaligus dari grid spreadsheet.'},
-                          {icon:'➕', label:'Tambah 5 Baris', desc:'Tambah 5 baris kosong di bawah grid spreadsheet untuk mengisi data lebih banyak.'},
-                          {icon:'💾', label:'Simpan Semua', desc:'Simpan semua baris valid ke database. Hanya baris dengan NIK+Nama+Perusahaan terisi yang disimpan. Baris kosong diabaikan.'},
-                          {icon:'➕', label:'+ Tambah Peserta (tombol ungu)', desc:'Input peserta satu per satu via form. Cocok untuk menambah 1-5 peserta saja.'},
-                          {icon:'📥', label:'Template', desc:'Download file Excel template kosong dengan format yang sudah benar. Isi lalu upload kembali.'},
-                          {icon:'📤', label:'Upload Excel', desc:'Upload file Excel yang sudah diisi mengikuti format template. Sistem memproses otomatis.'},
-                          {icon:'🔍', label:'Kolom Pencarian', desc:'Cari peserta berdasarkan NIK atau Nama. Ketik sebagian NIK/nama — hasil muncul real-time.'},
-                          {icon:'📁', label:'Filter Jenis Ujian (di atas daftar)', desc:'Klik nama jenis ujian untuk filter tampilan peserta per kategori. Klik "Semua Peserta" untuk tampil semua.'},
-                          {icon:'☑️', label:'Checkbox + Hapus Terpilih', desc:'Centang satu atau beberapa peserta di tabel → tombol "Hapus Terpilih" muncul di header. Untuk hapus massal dari daftar (bukan dari spreadsheet).'},
+                          {icon:'\ud83d\udcca', label:'Input via Spreadsheet (tombol hijau)', desc:'Cara tercepat untuk input massal. Klik \u2192 pilih jenis pelatihan \u2192 paste data dari Excel langsung ke grid. Paste bisa di kolom NIK, Nama, atau Perusahaan.'},
+                          {icon:'\ud83d\uddb1\ufe0f', label:'Klik Nomor Baris (block select)', desc:'Klik nomor di kolom paling kiri untuk pilih baris. Drag ke bawah untuk pilih banyak baris sekaligus. Shift+klik untuk range. Ctrl+klik untuk toggle satu baris.'},
+                          {icon:'\ud83c\udff7\ufe0f', label:'Tombol Kategori (Karyawan/Magang/dll)', desc:'Muncul di action bar ungu saat ada baris terpilih. Klik satu tombol untuk ubah kategori SEMUA baris terpilih sekaligus \u2014 tidak perlu satu per satu.'},
+                          {icon:'\ud83d\uddd1\ufe0f', label:'Hapus X baris (di action bar)', desc:'Muncul saat ada baris terpilih. Hapus semua baris yang dipilih sekaligus dari grid spreadsheet.'},
+                          {icon:'\u2795', label:'Tambah 5 Baris', desc:'Tambah 5 baris kosong di bawah grid spreadsheet untuk mengisi data lebih banyak.'},
+                          {icon:'\ud83d\udcbe', label:'Simpan Semua', desc:'Simpan semua baris valid ke database. Hanya baris dengan NIK+Nama+Perusahaan terisi yang disimpan. Baris kosong diabaikan.'},
+                          {icon:'\u2795', label:'+ Tambah Peserta (tombol ungu)', desc:'Input peserta satu per satu via form. Cocok untuk menambah 1-5 peserta saja.'},
+                          {icon:'\ud83d\udce5', label:'Template', desc:'Download file Excel template kosong dengan format yang sudah benar. Isi lalu upload kembali.'},
+                          {icon:'\ud83d\udce4', label:'Upload Excel', desc:'Upload file Excel yang sudah diisi mengikuti format template. Sistem memproses otomatis.'},
+                          {icon:'\ud83d\udd0d', label:'Kolom Pencarian', desc:'Cari peserta berdasarkan NIK atau Nama. Ketik sebagian NIK/nama \u2014 hasil muncul real-time.'},
+                          {icon:'\ud83d\udcc1', label:'Filter Jenis Ujian (di atas daftar)', desc:'Klik nama jenis ujian untuk filter tampilan peserta per kategori. Klik "Semua Peserta" untuk tampil semua.'},
+                          {icon:'\u2611\ufe0f', label:'Checkbox + Hapus Terpilih', desc:'Centang satu atau beberapa peserta di tabel \u2192 tombol "Hapus Terpilih" muncul di header. Untuk hapus massal dari daftar (bukan dari spreadsheet).'},
                         ].map((t,i)=>(
                           <div key={i} className="flex items-start gap-3 py-2 border-b border-[#E6E1E5] last:border-0">
                             <span className="text-base w-8 flex-shrink-0 text-center">{t.icon}</span>
@@ -2808,11 +2808,11 @@ export const AdminDashboard: React.FC = () => {
                 {guidePage === 'soal' && (
                   <div className="space-y-5">
                     <div>
-                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">❓ Manajemen Bank Soal</h4>
-                      <p className="text-xs text-[#49454F] leading-relaxed">Bank soal berisi semua pertanyaan untuk setiap jenis ujian. Sistem mengacak urutan soal DAN pilihan jawaban setiap sesi — setiap peserta mendapat kombinasi berbeda untuk mencegah kecurangan.</p>
+                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">\u2753 Manajemen Bank Soal</h4>
+                      <p className="text-xs text-[#49454F] leading-relaxed">Bank soal berisi semua pertanyaan untuk setiap jenis ujian. Sistem mengacak urutan soal DAN pilihan jawaban setiap sesi \u2014 setiap peserta mendapat kombinasi berbeda untuk mencegah kecurangan.</p>
                     </div>
                     <div className="bg-[#E8F5E9] border border-[#A5D6A7] rounded-xl p-3">
-                      <p className="text-xs font-bold text-[#2E7D32]">💡 Rekomendasi jumlah soal:</p>
+                      <p className="text-xs font-bold text-[#2E7D32]">\ud83d\udca1 Rekomendasi jumlah soal:</p>
                       <div className="grid grid-cols-3 gap-2 mt-2">
                         {[['Tampilkan 10 soal','Minimal 25 soal di bank'],['Tampilkan 20 soal','Minimal 40-50 soal'],['Tampilkan 30 soal','Minimal 60-80 soal']].map(([a,b],i)=>(
                           <div key={i} className="bg-white rounded-lg p-2 text-center">
@@ -2823,28 +2823,28 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     </div>
                     {[
-                      { title:'Input via Spreadsheet — Format yang Didukung', color:'#006A6A',
+                      { title:'Input via Spreadsheet \u2014 Format yang Didukung', color:'#006A6A',
                         steps:[
-                          'Klik "Input via Spreadsheet" → pilih jenis ujian',
-                          'Format 1 — Paling umum (kolom jawaban eksplisit):',
+                          'Klik "Input via Spreadsheet" \u2192 pilih jenis ujian',
+                          'Format 1 \u2014 Paling umum (kolom jawaban eksplisit):',
                           '   Excel: Pertanyaan [Tab] A [Tab] B [Tab] C [Tab] D [Tab] A',
                           '   Kolom ke-6 (A/B/C/D) otomatis jadi kunci jawaban',
-                          'Format 2 — Tanda marker di pilihan benar:',
-                          '   Excel: Pertanyaan [Tab] ✓Jawaban benar [Tab] Pilihan B [Tab] C [Tab] D',
-                          '   Tanda ✓, ✔, atau * di depan pilihan = kunci jawaban',
-                          'Format 3 — Kata kunci di akhir pilihan:',
+                          'Format 2 \u2014 Tanda marker di pilihan benar:',
+                          '   Excel: Pertanyaan [Tab] \u2713Jawaban benar [Tab] Pilihan B [Tab] C [Tab] D',
+                          '   Tanda \u2713, \u2714, atau * di depan pilihan = kunci jawaban',
+                          'Format 3 \u2014 Kata kunci di akhir pilihan:',
                           '   Excel: Pertanyaan [Tab] Jawaban benar (benar) [Tab] B [Tab] C [Tab] D',
                           '   Kata (benar), (correct), atau (jawaban) di akhir = kunci jawaban',
-                          'Klik sel kolom Pertanyaan di baris yang diinginkan → Ctrl+V',
-                          'Kunci jawaban terdeteksi otomatis — tombol A/B/C/D yang aktif berwarna hijau tua',
+                          'Klik sel kolom Pertanyaan di baris yang diinginkan \u2192 Ctrl+V',
+                          'Kunci jawaban terdeteksi otomatis \u2014 tombol A/B/C/D yang aktif berwarna hijau tua',
                           'Koreksi kunci jawaban jika perlu: klik langsung tombol A/B/C/D di kolom Kunci Jawaban',
-                          'Cek baris valid → Klik Simpan Semua',
+                          'Cek baris valid \u2192 Klik Simpan Semua',
                         ]},
                       { title:'Paste Bisa Dimulai dari Kolom Manapun', color:'#006A6A',
                         steps:[
-                          'Klik sel kolom Pertanyaan → paste → mengisi Pertanyaan + A + B + C + D + Jawaban',
-                          'Klik sel kolom Pilihan A → paste → mengisi A + B + C + D + Jawaban saja',
-                          'Klik sel kolom Pilihan B → paste → mengisi B + C + D + Jawaban saja',
+                          'Klik sel kolom Pertanyaan \u2192 paste \u2192 mengisi Pertanyaan + A + B + C + D + Jawaban',
+                          'Klik sel kolom Pilihan A \u2192 paste \u2192 mengisi A + B + C + D + Jawaban saja',
+                          'Klik sel kolom Pilihan B \u2192 paste \u2192 mengisi B + C + D + Jawaban saja',
                           'Sangat berguna jika Anda ingin menambah kolom yang kosong saja tanpa mengubah yang sudah ada',
                         ]},
                       { title:'Input Soal Manual (Satu per Satu)', color:'#49454F',
@@ -2861,14 +2861,14 @@ export const AdminDashboard: React.FC = () => {
                         steps:[
                           'Di tab Bank Soal, klik nama jenis ujian untuk melihat daftar soalnya',
                           'Tampil semua soal dengan pertanyaan, pilihan, dan jawaban benar',
-                          'Klik ikon 🗑️ di ujung kanan baris untuk hapus soal tersebut',
-                          'Centang beberapa soal → klik "Hapus Terpilih" untuk hapus massal',
+                          'Klik ikon \ud83d\uddd1\ufe0f di ujung kanan baris untuk hapus soal tersebut',
+                          'Centang beberapa soal \u2192 klik "Hapus Terpilih" untuk hapus massal',
                           'Untuk edit soal: hapus soal lama dan tambah soal baru (tidak ada fitur edit inline)',
                         ]},
                       { title:'Sistem Anti-Kecurangan Soal', color:'#6750A4',
                         steps:[
-                          'Urutan soal diacak setiap sesi — peserta A dan peserta B mendapat soal dengan urutan berbeda',
-                          'Urutan pilihan jawaban (A/B/C/D) juga diacak — jawaban yang sama di posisi berbeda',
+                          'Urutan soal diacak setiap sesi \u2014 peserta A dan peserta B mendapat soal dengan urutan berbeda',
+                          'Urutan pilihan jawaban (A/B/C/D) juga diacak \u2014 jawaban yang sama di posisi berbeda',
                           'Hanya sebagian soal yang tampil (sesuai setting Jumlah Soal) dari total bank soal',
                           'Watermark berisi Nama + NIK + Perusahaan peserta tampil transparan di seluruh layar ujian',
                           'Jika soal difoto/screenshot, identitas peserta tetap terlihat di watermark',
@@ -2876,7 +2876,7 @@ export const AdminDashboard: React.FC = () => {
                         ]},
                     ].map((item,i)=>(
                       <div key={i} className="border border-[#E6E1E5] rounded-2xl p-4">
-                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">📌 {item.title}</p>
+                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">\ud83d\udccc {item.title}</p>
                         <ol className="space-y-1.5">
                           {item.steps.map((s,j)=>(
                             <li key={j} className="flex items-start gap-2 text-xs text-[#49454F]">
@@ -2894,21 +2894,21 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
-                      <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
+                      <p className="text-sm font-black text-[#1C1B1F] mb-3">\ud83d\udee0\ufe0f Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
                         {[
-                          {icon:'📊', label:'Input via Spreadsheet (tombol hijau)', desc:'Input soal massal. Klik → pilih jenis ujian → paste dari Excel. Bisa paste mulai dari kolom Pertanyaan, Pilihan A, B, C, D — sistem menyesuaikan otomatis.'},
-                          {icon:'🔤', label:'Auto-detect Kunci Jawaban', desc:'Saat paste dari Excel, sistem mendeteksi jawaban dari: (1) kolom ke-6 berisi A/B/C/D, (2) tanda ✓ atau * di depan pilihan benar, (3) kata "(benar)" di akhir pilihan benar. Tidak perlu input manual.'},
-                          {icon:'🟩', label:'Tombol A / B / C / D (di kolom Kunci Jawaban)', desc:'Klik langsung untuk ubah kunci jawaban. Tombol yang aktif berwarna hijau tua. Tidak perlu dropdown — lebih cepat untuk koreksi.'},
-                          {icon:'📋', label:'Format Hint Panel (panel hijau muda)', desc:'Panel di atas grid menjelaskan 3 format Excel yang didukung. Baca ini sebelum paste dari Excel untuk memastikan format sesuai.'},
-                          {icon:'➕', label:'Tambah 5 Baris', desc:'Tambah 5 baris kosong di bawah grid untuk input lebih banyak soal.'},
-                          {icon:'💾', label:'Simpan Semua', desc:'Simpan semua baris valid ke database. Hanya baris dengan Pertanyaan + semua Pilihan terisi yang disimpan.'},
-                          {icon:'➕', label:'+ Tambah Soal (tombol ungu)', desc:'Input soal satu per satu via form. Pilih jenis ujian → isi pertanyaan → isi pilihan → pilih jawaban → Simpan.'},
-                          {icon:'📥', label:'Template', desc:'Download template Excel soal dengan contoh format yang benar.'},
-                          {icon:'📤', label:'Upload Excel', desc:'Upload file Excel soal yang sudah diisi. Format header: Pertanyaan | Pilihan A | Pilihan B | Pilihan C | Pilihan D | Jawaban Benar (A/B/C/D).'},
-                          {icon:'📁', label:'Klik Nama Jenis Ujian (di tab Bank Soal)', desc:'Klik nama jenis ujian untuk melihat daftar soal yang terkait. Tampil semua soal dengan pertanyaan, pilihan, dan jawaban benar.'},
-                          {icon:'🗑️', label:'Hapus Soal (ikon tempat sampah)', desc:'Klik ikon 🗑️ di ujung kanan baris soal untuk hapus soal tersebut satu per satu.'},
-                          {icon:'☑️', label:'Checkbox + Hapus Terpilih', desc:'Centang beberapa soal → klik "Hapus Terpilih" di header untuk hapus massal.'},
+                          {icon:'\ud83d\udcca', label:'Input via Spreadsheet (tombol hijau)', desc:'Input soal massal. Klik \u2192 pilih jenis ujian \u2192 paste dari Excel. Bisa paste mulai dari kolom Pertanyaan, Pilihan A, B, C, D \u2014 sistem menyesuaikan otomatis.'},
+                          {icon:'\ud83d\udd24', label:'Auto-detect Kunci Jawaban', desc:'Saat paste dari Excel, sistem mendeteksi jawaban dari: (1) kolom ke-6 berisi A/B/C/D, (2) tanda \u2713 atau * di depan pilihan benar, (3) kata "(benar)" di akhir pilihan benar. Tidak perlu input manual.'},
+                          {icon:'\ud83d\udfe9', label:'Tombol A / B / C / D (di kolom Kunci Jawaban)', desc:'Klik langsung untuk ubah kunci jawaban. Tombol yang aktif berwarna hijau tua. Tidak perlu dropdown \u2014 lebih cepat untuk koreksi.'},
+                          {icon:'\ud83d\udccb', label:'Format Hint Panel (panel hijau muda)', desc:'Panel di atas grid menjelaskan 3 format Excel yang didukung. Baca ini sebelum paste dari Excel untuk memastikan format sesuai.'},
+                          {icon:'\u2795', label:'Tambah 5 Baris', desc:'Tambah 5 baris kosong di bawah grid untuk input lebih banyak soal.'},
+                          {icon:'\ud83d\udcbe', label:'Simpan Semua', desc:'Simpan semua baris valid ke database. Hanya baris dengan Pertanyaan + semua Pilihan terisi yang disimpan.'},
+                          {icon:'\u2795', label:'+ Tambah Soal (tombol ungu)', desc:'Input soal satu per satu via form. Pilih jenis ujian \u2192 isi pertanyaan \u2192 isi pilihan \u2192 pilih jawaban \u2192 Simpan.'},
+                          {icon:'\ud83d\udce5', label:'Template', desc:'Download template Excel soal dengan contoh format yang benar.'},
+                          {icon:'\ud83d\udce4', label:'Upload Excel', desc:'Upload file Excel soal yang sudah diisi. Format header: Pertanyaan | Pilihan A | Pilihan B | Pilihan C | Pilihan D | Jawaban Benar (A/B/C/D).'},
+                          {icon:'\ud83d\udcc1', label:'Klik Nama Jenis Ujian (di tab Bank Soal)', desc:'Klik nama jenis ujian untuk melihat daftar soal yang terkait. Tampil semua soal dengan pertanyaan, pilihan, dan jawaban benar.'},
+                          {icon:'\ud83d\uddd1\ufe0f', label:'Hapus Soal (ikon tempat sampah)', desc:'Klik ikon \ud83d\uddd1\ufe0f di ujung kanan baris soal untuk hapus soal tersebut satu per satu.'},
+                          {icon:'\u2611\ufe0f', label:'Checkbox + Hapus Terpilih', desc:'Centang beberapa soal \u2192 klik "Hapus Terpilih" di header untuk hapus massal.'},
                         ].map((t,i)=>(
                           <div key={i} className="flex items-start gap-3 py-2 border-b border-[#E6E1E5] last:border-0">
                             <span className="text-base w-8 flex-shrink-0 text-center">{t.icon}</span>
@@ -2927,12 +2927,12 @@ export const AdminDashboard: React.FC = () => {
                 {guidePage === 'hasil' && (
                   <div className="space-y-5">
                     <div>
-                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">📈 Laporan Hasil Ujian</h4>
-                      <p className="text-xs text-[#49454F] leading-relaxed">Seluruh hasil ujian tersimpan permanen di sini — tidak terhapus meskipun data peserta master diperbarui. Gunakan halaman ini untuk evaluasi, pelaporan, dan monitoring integritas ujian.</p>
+                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">\ud83d\udcc8 Laporan Hasil Ujian</h4>
+                      <p className="text-xs text-[#49454F] leading-relaxed">Seluruh hasil ujian tersimpan permanen di sini \u2014 tidak terhapus meskipun data peserta master diperbarui. Gunakan halaman ini untuk evaluasi, pelaporan, dan monitoring integritas ujian.</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        {label:'Lulus',color:'#2E7D32',bg:'#E8F5E9',desc:'Skor ≥ passing score, ujian pertama'},
+                        {label:'Lulus',color:'#2E7D32',bg:'#E8F5E9',desc:'Skor \u2265 passing score, ujian pertama'},
                         {label:'Tidak Lulus',color:'#B3261E',bg:'#F9DEDC',desc:'Skor < passing score, ujian pertama'},
                         {label:'Lulus Remedial',color:'#1565C0',bg:'#E3F2FD',desc:'Lulus di ujian ulang (remedial)'},
                         {label:'Tidak Lulus Remedial',color:'#F57F17',bg:'#FFF8E1',desc:'Gagal di ujian ulang'},
@@ -2955,11 +2955,11 @@ export const AdminDashboard: React.FC = () => {
                         steps:[
                           'Tampil tabel/card dengan: Nama, Timestamp pengerjaan, NIK, Nilai, Perusahaan, Status',
                           'Gunakan kolom pencarian untuk cari peserta tertentu by nama atau NIK',
-                          'Klik ikon 📋 di ujung kanan untuk melihat DETAIL KECURANGAN peserta tersebut:',
-                          '   — Jumlah tab switching (keluar layar ujian)',
-                          '   — Jumlah upaya screenshot yang terdeteksi',
-                          '   — Jumlah upaya copy-paste teks soal',
-                          'Klik "← Kembali" untuk kembali ke ringkasan',
+                          'Klik ikon \ud83d\udccb di ujung kanan untuk melihat DETAIL KECURANGAN peserta tersebut:',
+                          '   \u2014 Jumlah tab switching (keluar layar ujian)',
+                          '   \u2014 Jumlah upaya screenshot yang terdeteksi',
+                          '   \u2014 Jumlah upaya copy-paste teks soal',
+                          'Klik "\u2190 Kembali" untuk kembali ke ringkasan',
                         ]},
                       { title:'Menggunakan Filter Jenis Ujian', color:'#6750A4',
                         steps:[
@@ -2973,22 +2973,22 @@ export const AdminDashboard: React.FC = () => {
                           'Klik tombol "Export Excel" di pojok kanan atas header',
                           'Pilih jenis ujian yang ingin diekspor (atau semua)',
                           'Pilih rentang tanggal',
-                          'Klik tombol Ekspor — file Excel otomatis terunduh',
+                          'Klik tombol Ekspor \u2014 file Excel otomatis terunduh',
                           'File Excel berisi kolom: NIK, Nama, Perusahaan, Nilai, Status Lulus, Timestamp, Pindah Tab, Upaya Screenshot, Upaya Copy',
                           'File ini bisa langsung digunakan untuk pelaporan kepada manajemen atau HR',
                         ]},
                       { title:'Memahami Data Kecurangan dalam Hasil', color:'#B3261E',
                         steps:[
-                          '"Pindah Tab" — berapa kali peserta berpindah dari halaman ujian (termasuk minimize)',
-                          '"Upaya Screenshot" — berapa kali deteksi screenshot atau PrintScreen',
-                          '"Upaya Copy" — berapa kali peserta mencoba menyalin teks soal',
-                          'Data ini tersedia di laporan Excel dan di detail kecurangan (ikon 📋)',
+                          '"Pindah Tab" \u2014 berapa kali peserta berpindah dari halaman ujian (termasuk minimize)',
+                          '"Upaya Screenshot" \u2014 berapa kali deteksi screenshot atau PrintScreen',
+                          '"Upaya Copy" \u2014 berapa kali peserta mencoba menyalin teks soal',
+                          'Data ini tersedia di laporan Excel dan di detail kecurangan (ikon \ud83d\udccb)',
                           'Sistem juga memberikan penalti otomatis: pelanggaran ke-4 = tunggu 2 menit, ke-5 = 4 menit, ke-6+ = 10 menit',
                           'Gunakan data ini sebagai bahan evaluasi integritas peserta',
                         ]},
                     ].map((item,i)=>(
                       <div key={i} className="border border-[#E6E1E5] rounded-2xl p-4">
-                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">📌 {item.title}</p>
+                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">\ud83d\udccc {item.title}</p>
                         <ol className="space-y-1.5">
                           {item.steps.map((s,j)=>(
                             <li key={j} className="flex items-start gap-2 text-xs text-[#49454F]">
@@ -3006,15 +3006,15 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
-                      <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
+                      <p className="text-sm font-black text-[#1C1B1F] mb-3">\ud83d\udee0\ufe0f Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
                         {[
-                          {icon:'🔽', label:'Filter Jenis Ujian (dropdown)', desc:'Filter semua data hasil berdasarkan jenis ujian tertentu. Pilih dari dropdown di header. Juga mempengaruhi data yang diekspor.'},
-                          {icon:'🖱️', label:'Klik Baris Ringkasan', desc:'Klik baris (tanggal + nama ujian) untuk masuk ke halaman detail hasil semua peserta di sesi tersebut.'},
-                          {icon:'⬅️', label:'Tombol Kembali (← di detail)', desc:'Klik panah kiri di header detail untuk kembali ke halaman ringkasan tanpa kehilangan filter.'},
-                          {icon:'🔍', label:'Kolom Pencarian (di halaman detail)', desc:'Cari peserta berdasarkan nama atau NIK. Ketik sebagian teks — hasil muncul real-time.'},
-                          {icon:'📋', label:'Ikon Info / Kecurangan (di baris peserta)', desc:'Klik ikon 📋 di ujung kanan baris peserta untuk melihat data kecurangan: jumlah tab switching, upaya screenshot, dan upaya copy-paste.'},
-                          {icon:'📥', label:'Export Excel (tombol ungu)', desc:'Klik → pilih jenis ujian dan rentang tanggal → klik Ekspor. File Excel terunduh berisi data lengkap termasuk nilai, status, dan data kecurangan.'},
+                          {icon:'\ud83d\udd3d', label:'Filter Jenis Ujian (dropdown)', desc:'Filter semua data hasil berdasarkan jenis ujian tertentu. Pilih dari dropdown di header. Juga mempengaruhi data yang diekspor.'},
+                          {icon:'\ud83d\uddb1\ufe0f', label:'Klik Baris Ringkasan', desc:'Klik baris (tanggal + nama ujian) untuk masuk ke halaman detail hasil semua peserta di sesi tersebut.'},
+                          {icon:'\u2b05\ufe0f', label:'Tombol Kembali (\u2190 di detail)', desc:'Klik panah kiri di header detail untuk kembali ke halaman ringkasan tanpa kehilangan filter.'},
+                          {icon:'\ud83d\udd0d', label:'Kolom Pencarian (di halaman detail)', desc:'Cari peserta berdasarkan nama atau NIK. Ketik sebagian teks \u2014 hasil muncul real-time.'},
+                          {icon:'\ud83d\udccb', label:'Ikon Info / Kecurangan (di baris peserta)', desc:'Klik ikon \ud83d\udccb di ujung kanan baris peserta untuk melihat data kecurangan: jumlah tab switching, upaya screenshot, dan upaya copy-paste.'},
+                          {icon:'\ud83d\udce5', label:'Export Excel (tombol ungu)', desc:'Klik \u2192 pilih jenis ujian dan rentang tanggal \u2192 klik Ekspor. File Excel terunduh berisi data lengkap termasuk nilai, status, dan data kecurangan.'},
                         ].map((t,i)=>(
                           <div key={i} className="flex items-start gap-3 py-2 border-b border-[#E6E1E5] last:border-0">
                             <span className="text-base w-8 flex-shrink-0 text-center">{t.icon}</span>
@@ -3033,16 +3033,16 @@ export const AdminDashboard: React.FC = () => {
                 {guidePage === 'remedial' && (
                   <div className="space-y-5">
                     <div>
-                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">🔄 Manajemen Request Remedial</h4>
+                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">\ud83d\udd04 Manajemen Request Remedial</h4>
                       <p className="text-xs text-[#49454F] leading-relaxed">Peserta yang gagal atau ingin mengulang ujian di hari yang sama dapat mengajukan request remedial dari halaman hasil ujian mereka. Admin menentukan apakah request disetujui atau ditolak.</p>
                     </div>
                     <div className="bg-[#E3F2FD] border border-[#90CAF9] rounded-xl p-3">
-                      <p className="text-xs font-bold text-[#1565C0]">ℹ️ Alur lengkap remedial:</p>
+                      <p className="text-xs font-bold text-[#1565C0]">\u2139\ufe0f Alur lengkap remedial:</p>
                       <div className="mt-2 space-y-1">
                         {[
-                          '1. Peserta selesai ujian → lihat hasil → klik "Minta Ujian Ulang"',
+                          '1. Peserta selesai ujian \u2192 lihat hasil \u2192 klik "Minta Ujian Ulang"',
                           '2. Request muncul di tab ini dengan status "Pending" + notifikasi badge merah di sidebar',
-                          '3. Admin buka tab Request Remedial → tinjau request → Setujui atau Tolak',
+                          '3. Admin buka tab Request Remedial \u2192 tinjau request \u2192 Setujui atau Tolak',
                           '4. Jika Disetujui: peserta bisa login kembali di hari yang sama',
                           '5. Status berubah "Used" setelah peserta menggunakan slot remedial',
                         ].map((t,i)=>(
@@ -3065,14 +3065,14 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                     {[
                       { title:'Menyetujui Request Remedial', color:'#2E7D32',
-                        steps:['Buka tab "Request Remedial" di sidebar','Lihat daftar request — yang "Pending" perlu diproses','Periksa informasi: Nama peserta, NIK, Perusahaan, Jenis Ujian, Waktu Request','Klik tombol ✓ (centang hijau) untuk menyetujui','Status berubah menjadi "Approved"','Peserta langsung dapat login kembali dan mengerjakan ujian — TANPA perlu menunggu hari berikutnya','Hasil remedial tercatat dengan status "Lulus Remedial" atau "Tidak Lulus Remedial"']},
+                        steps:['Buka tab "Request Remedial" di sidebar','Lihat daftar request \u2014 yang "Pending" perlu diproses','Periksa informasi: Nama peserta, NIK, Perusahaan, Jenis Ujian, Waktu Request','Klik tombol \u2713 (centang hijau) untuk menyetujui','Status berubah menjadi "Approved"','Peserta langsung dapat login kembali dan mengerjakan ujian \u2014 TANPA perlu menunggu hari berikutnya','Hasil remedial tercatat dengan status "Lulus Remedial" atau "Tidak Lulus Remedial"']},
                       { title:'Menolak Request Remedial', color:'#B3261E',
-                        steps:['Klik tombol ✗ (silang merah) pada request yang ingin ditolak','Status berubah menjadi "Rejected"','Peserta tidak dapat mengerjakan ujian ulang di hari tersebut','Peserta bisa request remedial lagi jika diperlukan (admin perlu approve lagi)']},
+                        steps:['Klik tombol \u2717 (silang merah) pada request yang ingin ditolak','Status berubah menjadi "Rejected"','Peserta tidak dapat mengerjakan ujian ulang di hari tersebut','Peserta bisa request remedial lagi jika diperlukan (admin perlu approve lagi)']},
                       { title:'Catatan dan Aturan Penting', color:'#F57F17',
-                        steps:['Setiap approval hanya berlaku untuk 1 kali ujian ulang','Jika peserta ingin mengulang lagi, harus submit request baru → admin approve lagi','Badge merah di sidebar menunjukkan jumlah request "Pending" yang belum diproses','Request remedial tidak ada batas waktu kadaluarsa — berlaku sampai digunakan atau ditolak','Admin dapat approve/reject kapan saja — tidak harus real-time','Pada hari berikutnya, peserta bisa langsung mengikuti ujian tanpa perlu remedial request']},
+                        steps:['Setiap approval hanya berlaku untuk 1 kali ujian ulang','Jika peserta ingin mengulang lagi, harus submit request baru \u2192 admin approve lagi','Badge merah di sidebar menunjukkan jumlah request "Pending" yang belum diproses','Request remedial tidak ada batas waktu kadaluarsa \u2014 berlaku sampai digunakan atau ditolak','Admin dapat approve/reject kapan saja \u2014 tidak harus real-time','Pada hari berikutnya, peserta bisa langsung mengikuti ujian tanpa perlu remedial request']},
                     ].map((item,i)=>(
                       <div key={i} className="border border-[#E6E1E5] rounded-2xl p-4">
-                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">📌 {item.title}</p>
+                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">\ud83d\udccc {item.title}</p>
                         <ol className="space-y-1.5">
                           {item.steps.map((s,j)=>(
                             <li key={j} className="flex items-start gap-2 text-xs text-[#49454F]">
@@ -3084,13 +3084,13 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
-                      <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
+                      <p className="text-sm font-black text-[#1C1B1F] mb-3">\ud83d\udee0\ufe0f Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
                         {[
-                          {icon:'✓', label:'Tombol Setujui (centang hijau)', desc:'Klik untuk menyetujui request remedial. Status berubah "Approved". Peserta langsung bisa login kembali dan mengerjakan ujian di hari yang sama.'},
-                          {icon:'✕', label:'Tombol Tolak (silang merah)', desc:'Klik untuk menolak request. Status berubah "Rejected". Peserta tidak bisa ujian ulang hari ini.'},
-                          {icon:'🔴', label:'Badge merah di sidebar', desc:'Angka merah di samping menu "Request Remedial" menunjukkan jumlah request Pending yang belum diproses. Klik menu untuk segera menanganinya.'},
-                          {icon:'📄', label:'Info peserta di setiap request', desc:'Setiap baris menampilkan: Waktu request, Nama, NIK, Perusahaan, Jenis Ujian yang diminta, dan Status. Periksa semua informasi sebelum menyetujui atau menolak.'},
+                          {icon:'\u2713', label:'Tombol Setujui (centang hijau)', desc:'Klik untuk menyetujui request remedial. Status berubah "Approved". Peserta langsung bisa login kembali dan mengerjakan ujian di hari yang sama.'},
+                          {icon:'\u2715', label:'Tombol Tolak (silang merah)', desc:'Klik untuk menolak request. Status berubah "Rejected". Peserta tidak bisa ujian ulang hari ini.'},
+                          {icon:'\ud83d\udd34', label:'Badge merah di sidebar', desc:'Angka merah di samping menu "Request Remedial" menunjukkan jumlah request Pending yang belum diproses. Klik menu untuk segera menanganinya.'},
+                          {icon:'\ud83d\udcc4', label:'Info peserta di setiap request', desc:'Setiap baris menampilkan: Waktu request, Nama, NIK, Perusahaan, Jenis Ujian yang diminta, dan Status. Periksa semua informasi sebelum menyetujui atau menolak.'},
                         ].map((t,i)=>(
                           <div key={i} className="flex items-start gap-3 py-2 border-b border-[#E6E1E5] last:border-0">
                             <span className="text-base w-8 flex-shrink-0 text-center">{t.icon}</span>
@@ -3109,11 +3109,11 @@ export const AdminDashboard: React.FC = () => {
                 {guidePage === 'pengaturan' && (
                   <div className="space-y-5">
                     <div>
-                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">⚙️ Pengaturan Sistem</h4>
+                      <h4 className="text-lg font-black text-[#1C1B1F] mb-1">\u2699\ufe0f Pengaturan Sistem</h4>
                       <p className="text-xs text-[#49454F] leading-relaxed">Kelola akun administrator, tampilan halaman login peserta, dan pengaturan sistem lainnya. Sebagian fitur hanya tersedia untuk Super Admin.</p>
                     </div>
                     <div className="bg-[#F9DEDC] border border-[#F2B8B5] rounded-xl p-3">
-                      <p className="text-xs font-bold text-[#B3261E]">🔐 Perbedaan Super Admin vs Admin biasa:</p>
+                      <p className="text-xs font-bold text-[#B3261E]">\ud83d\udd10 Perbedaan Super Admin vs Admin biasa:</p>
                       <div className="grid grid-cols-2 gap-2 mt-2">
                         <div>
                           <p className="text-[10px] font-bold text-[#B3261E]">Super Admin bisa:</p>
@@ -3127,18 +3127,18 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                     {[
                       { title:'Manajemen Akun Administrator', color:'#6750A4',
-                        steps:['Buka tab "Pengaturan" → bagian "Daftar Administrator"','Tampil semua akun admin beserta status verifikasi (Terverifikasi / Pending)','Klik "+ Tambah Admin" untuk buat akun admin baru','Isi username dan password untuk akun baru','Admin baru perlu DIVERIFIKASI oleh Super Admin sebelum bisa login','Klik ikon 🗑️ untuk hapus akun admin — hanya Super Admin yang bisa menghapus','Jangan hapus akun sendiri — gunakan akun lain jika perlu penggantian']},
+                        steps:['Buka tab "Pengaturan" \u2192 bagian "Daftar Administrator"','Tampil semua akun admin beserta status verifikasi (Terverifikasi / Pending)','Klik "+ Tambah Admin" untuk buat akun admin baru','Isi username dan password untuk akun baru','Admin baru perlu DIVERIFIKASI oleh Super Admin sebelum bisa login','Klik ikon \ud83d\uddd1\ufe0f untuk hapus akun admin \u2014 hanya Super Admin yang bisa menghapus','Jangan hapus akun sendiri \u2014 gunakan akun lain jika perlu penggantian']},
                       { title:'Mengedit Tampilan Landing Page Peserta', color:'#1565C0',
-                        steps:['Buka tab "Pengaturan" → bagian "Tampilan Landing Page"','Edit Judul yang tampil di halaman login peserta (contoh: "EHS Training PT. Contoh 2026")','Edit Deskripsi singkat di bawah judul','Klik "Simpan" — perubahan langsung berlaku di halaman login peserta','Preview tampilan tersedia di bagian bawah editor','Gunakan judul yang spesifik agar peserta tahu mereka di platform yang benar']},
-                      { title:'Reset Data Ujian (Berbahaya — Tidak Bisa Dibatalkan)', color:'#B3261E',
-                        steps:['Buka tab "Pengaturan" → bagian "Reset Data"','EKSPOR DATA KE EXCEL TERLEBIH DAHULU sebelum reset apapun!','Pilih jenis data yang ingin direset','Masukkan password konfirmasi untuk verifikasi','Klik Reset — proses tidak dapat dibatalkan','Yang DIHAPUS saat reset data hasil: seluruh data hasil ujian dan request remedial','Yang TIDAK TERHAPUS: jenis ujian, soal, dan peserta master']},
+                        steps:['Buka tab "Pengaturan" \u2192 bagian "Tampilan Landing Page"','Edit Judul yang tampil di halaman login peserta (contoh: "EHS Training PT. Contoh 2026")','Edit Deskripsi singkat di bawah judul','Klik "Simpan" \u2014 perubahan langsung berlaku di halaman login peserta','Preview tampilan tersedia di bagian bawah editor','Gunakan judul yang spesifik agar peserta tahu mereka di platform yang benar']},
+                      { title:'Reset Data Ujian (Berbahaya \u2014 Tidak Bisa Dibatalkan)', color:'#B3261E',
+                        steps:['Buka tab "Pengaturan" \u2192 bagian "Reset Data"','EKSPOR DATA KE EXCEL TERLEBIH DAHULU sebelum reset apapun!','Pilih jenis data yang ingin direset','Masukkan password konfirmasi untuk verifikasi','Klik Reset \u2014 proses tidak dapat dibatalkan','Yang DIHAPUS saat reset data hasil: seluruh data hasil ujian dan request remedial','Yang TIDAK TERHAPUS: jenis ujian, soal, dan peserta master']},
                       { title:'Keamanan Sistem yang Berjalan Otomatis', color:'#2E7D32',
                         steps:['1 Akun 1 Perangkat: peserta tidak bisa login dari 2 perangkat sekaligus','Penalti kecurangan otomatis: pelanggaran ke-4 = tunggu 2 menit, ke-5 = 4 menit, ke-6+ = 10 menit','Anti copy-paste: peserta tidak bisa menyalin teks soal','Watermark dinamis: nama+NIK+perusahaan peserta tampil di seluruh layar ujian','Deteksi tab switching: tercatat setiap kali peserta meninggalkan halaman ujian','Sesi nonaktif oleh admin: peserta tidak bisa submit jawaban jika sesi dimatikan di tengah ujian']},
                       { title:'Tips Pengelolaan Sistem yang Baik', color:'#006A6A',
                         steps:['Selalu ekspor hasil ujian ke Excel sebelum mengganti data peserta','Nonaktifkan sesi ujian segera setelah training selesai','Jika ada masalah login peserta: cek apakah NIK terdaftar dan sesi aktif','Backup data secara berkala menggunakan fitur Export Excel','Koordinasikan dengan tim HR untuk memastikan NIK peserta akurat','Gunakan nama jenis ujian yang deskriptif agar mudah diidentifikasi di laporan']},
                     ].map((item,i)=>(
                       <div key={i} className="border border-[#E6E1E5] rounded-2xl p-4">
-                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">📌 {item.title}</p>
+                        <p className="font-bold text-[#1C1B1F] text-sm mb-3">\ud83d\udccc {item.title}</p>
                         <ol className="space-y-1.5">
                           {item.steps.map((s,j)=>(
                             <li key={j} className="flex items-start gap-2 text-xs text-[#49454F]">
@@ -3150,16 +3150,16 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
-                      <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
+                      <p className="text-sm font-black text-[#1C1B1F] mb-3">\ud83d\udee0\ufe0f Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
                         {[
-                          {icon:'➕', label:'+ Tambah Admin', desc:'Buat akun admin baru. Isi username dan password → Simpan. Akun baru perlu diverifikasi Super Admin sebelum bisa login.'},
-                          {icon:'🗑️', label:'Hapus Admin (ikon tempat sampah)', desc:'Hapus akun admin lain. Hanya tersedia untuk Super Admin. Tidak bisa menghapus akun yang sedang digunakan.'},
-                          {icon:'✏️', label:'Editor Judul & Deskripsi Landing Page', desc:'Edit langsung di kotak teks. Judul dan deskripsi muncul di halaman login peserta.'},
-                          {icon:'👁️', label:'Preview Landing Page (di bawah editor)', desc:'Tampil otomatis saat Anda mengetik — menunjukkan tampilan halaman login peserta sesuai teks yang diubah.'},
-                          {icon:'💾', label:'Simpan (di Landing Page)', desc:'Klik Simpan untuk menyimpan perubahan judul/deskripsi ke database. Perubahan langsung berlaku.'},
-                          {icon:'🔴', label:'Reset Data (tombol merah)', desc:'Hapus data hasil ujian secara permanen. Wajib isi password konfirmasi untuk verifikasi identitas. EKSPOR DATA KE EXCEL TERLEBIH DAHULU.'},
-                          {icon:'⚙️', label:'Pengaturan Dashboard (ikon di hero banner)', desc:'Klik ikon ⚙️ di pojok kanan hero banner halaman Dashboard untuk toggle tampilan chart (pie chart / bar bulanan / bar tahunan).'},
+                          {icon:'\u2795', label:'+ Tambah Admin', desc:'Buat akun admin baru. Isi username dan password \u2192 Simpan. Akun baru perlu diverifikasi Super Admin sebelum bisa login.'},
+                          {icon:'\ud83d\uddd1\ufe0f', label:'Hapus Admin (ikon tempat sampah)', desc:'Hapus akun admin lain. Hanya tersedia untuk Super Admin. Tidak bisa menghapus akun yang sedang digunakan.'},
+                          {icon:'\u270f\ufe0f', label:'Editor Judul & Deskripsi Landing Page', desc:'Edit langsung di kotak teks. Judul dan deskripsi muncul di halaman login peserta.'},
+                          {icon:'\ud83d\udc41\ufe0f', label:'Preview Landing Page (di bawah editor)', desc:'Tampil otomatis saat Anda mengetik \u2014 menunjukkan tampilan halaman login peserta sesuai teks yang diubah.'},
+                          {icon:'\ud83d\udcbe', label:'Simpan (di Landing Page)', desc:'Klik Simpan untuk menyimpan perubahan judul/deskripsi ke database. Perubahan langsung berlaku.'},
+                          {icon:'\ud83d\udd34', label:'Reset Data (tombol merah)', desc:'Hapus data hasil ujian secara permanen. Wajib isi password konfirmasi untuk verifikasi identitas. EKSPOR DATA KE EXCEL TERLEBIH DAHULU.'},
+                          {icon:'\u2699\ufe0f', label:'Pengaturan Dashboard (ikon di hero banner)', desc:'Klik ikon \u2699\ufe0f di pojok kanan hero banner halaman Dashboard untuk toggle tampilan chart (pie chart / bar bulanan / bar tahunan).'},
                         ].map((t,i)=>(
                           <div key={i} className="flex items-start gap-3 py-2 border-b border-[#E6E1E5] last:border-0">
                             <span className="text-base w-8 flex-shrink-0 text-center">{t.icon}</span>
@@ -3173,16 +3173,23 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                   </div>
                 )}
+
+              </div>{/* \u2190 TUTUP: flex-1 overflow-y-auto (konten panduan) */}
+            </div>{/* \u2190 TUTUP: flex flex-1 overflow-hidden (body modal) */}
+
+            {/* Footer */}
             <div className="p-4 border-t border-[#E6E1E5] flex items-center justify-between flex-shrink-0 bg-[#FDFCFB]">
-              <p className="text-[10px] text-[#9CA3AF]">EHS Learning System — Panduan Admin v2.0</p>
+              <p className="text-[10px] text-[#9CA3AF]">EHS Learning System \u2014 Panduan Admin v2.0</p>
               <button onClick={() => setShowGuideModal(false)}
                 className="px-6 py-2.5 rounded-xl bg-[#6750A4] text-white font-bold text-sm hover:bg-[#4F378B] transition-all">
                 Tutup Panduan
               </button>
             </div>
-          </motion.div>
+
+          </motion.div>{/* \u2190 TUTUP: motion.div (modal container) */}
         </div>
-      )}
+      )}{/* \u2190 TUTUP: showGuideModal */}
+
       {showAddSoalModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-[32px] w-full max-w-2xl p-8 shadow-2xl border border-[#E6E1E5] max-h-[90vh] overflow-y-auto">
@@ -4128,20 +4135,17 @@ export const AdminDashboard: React.FC = () => {
                       isDraggingRef.current = true;
 
                       if (e.shiftKey && anchorRow !== null) {
-                        // Shift+klik: pilih range
                         const min = Math.min(anchorRow, ri);
                         const max = Math.max(anchorRow, ri);
                         const next = new Set<number>();
                         for (let i = min; i <= max; i++) next.add(i);
                         setSelectedRows(next);
                       } else if (e.ctrlKey || e.metaKey) {
-                        // Ctrl+klik: toggle
                         const next = new Set(selectedRows);
                         if (next.has(ri)) next.delete(ri); else next.add(ri);
                         setSelectedRows(next);
                         setAnchorRow(ri);
                       } else {
-                        // Klik biasa: pilih hanya baris ini
                         setSelectedRows(new Set([ri]));
                         setAnchorRow(ri);
                       }
@@ -4150,7 +4154,6 @@ export const AdminDashboard: React.FC = () => {
 
                     const handleNumMouseEnter = () => {
                       if (!isDraggingRef.current) return;
-                      // Drag: extend selection dari anchor ke sini
                       if (anchorRow !== null) {
                         const min = Math.min(anchorRow, ri);
                         const max = Math.max(anchorRow, ri);
@@ -4185,7 +4188,6 @@ export const AdminDashboard: React.FC = () => {
 
                     return (
                       <tr key={ri} className={isSelected ? 'bg-[#EDE7FF]' : ri % 2 === 0 ? 'bg-white' : 'bg-[#FAFAFA]'}>
-                        {/* Nomor baris — area block select */}
                         <td
                           className="border border-[#E6E1E5] text-center cursor-pointer p-0"
                           onMouseDown={handleNumMouseDown}
@@ -4251,7 +4253,8 @@ export const AdminDashboard: React.FC = () => {
           </motion.div>
         </div>
       )}
-            {/* Spreadsheet Modal Soal */}
+
+      {/* Spreadsheet Modal Soal */}
       {showSpreadsheetSoal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-2 md:p-4">
           <motion.div initial={{opacity:0,y:20}} animate={{opacity:1,y:0}}
@@ -4340,7 +4343,6 @@ export const AdminDashboard: React.FC = () => {
                         const rowData: any = idx < newRows.length ? {...newRows[idx]} : {...emptySoalRow()};
 
                         if (col === 'pertanyaan' && cells.length >= 5) {
-                          // Paste lengkap: cek format jawaban
                           const lastCell = (cells[5] || cells[cells.length-1] || '').trim().toUpperCase();
                           const isExplicitAnswer = /^[ABCD]$/.test(lastCell) && cells.length >= 6;
                           const pilihanCells = cells.slice(1, 5);
@@ -4356,7 +4358,6 @@ export const AdminDashboard: React.FC = () => {
                           else if (answer) rowData.jawaban_benar = answer;
 
                         } else if (col === 'pertanyaan' && cells.length === 5) {
-                          // 5 kolom: cek apakah kolom ke-5 adalah jawaban A/B/C/D
                           const col5 = (cells[4] || '').trim().toUpperCase();
                           if (/^[ABCD]$/.test(col5)) {
                             const { cleaned, answer } = detectAndParse(cells.slice(1, 4));
@@ -4375,7 +4376,6 @@ export const AdminDashboard: React.FC = () => {
                             if (answer) rowData.jawaban_benar = answer;
                           }
                         } else {
-                          // Paste dari kolom lain
                           cells.forEach((cell:string, ci:number) => {
                             const tci = startColIdx + ci;
                             if (tci < colOrder.length) {
@@ -4453,3 +4453,5 @@ export const AdminDashboard: React.FC = () => {
     </div>
   );
 };
+
+export default AdminDashboard;
