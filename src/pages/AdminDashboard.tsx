@@ -2657,6 +2657,7 @@ export const AdminDashboard: React.FC = () => {
                         </ol>
                       </div>
                     ))}
+                  </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -2774,6 +2775,7 @@ export const AdminDashboard: React.FC = () => {
                         </ol>
                       </div>
                     ))}
+                  </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -2893,6 +2895,7 @@ export const AdminDashboard: React.FC = () => {
                         </ol>
                       </div>
                     ))}
+                  </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -3005,6 +3008,7 @@ export const AdminDashboard: React.FC = () => {
                         </ol>
                       </div>
                     ))}
+                  </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -3083,6 +3087,7 @@ export const AdminDashboard: React.FC = () => {
                         </ol>
                       </div>
                     ))}
+                  </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -3148,6 +3153,8 @@ export const AdminDashboard: React.FC = () => {
                           ))}
                         </ol>
                       </div>
+                    ))}
+                  </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -4250,59 +4257,6 @@ export const AdminDashboard: React.FC = () => {
           </motion.div>
         </div>
       )}
-
-
-            {/* Modal Pilih Jenis Ujian untuk Spreadsheet */}
-      {showSelectJenisModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-          <motion.div initial={{opacity:0,scale:0.95}} animate={{opacity:1,scale:1}}
-            className="bg-white rounded-[28px] w-full max-w-md p-8 shadow-2xl border border-[#E6E1E5]">
-            <h3 className="text-xl font-bold mb-2">Pilih Jenis {selectJenisMode === 'peserta' ? 'Pelatihan' : 'Ujian'}</h3>
-            <p className="text-sm text-[#49454F] mb-6">
-              {selectJenisMode === 'peserta'
-                ? 'Peserta akan didaftarkan ke jenis pelatihan yang dipilih.'
-                : 'Soal akan dimasukkan ke jenis ujian yang dipilih.'}
-            </p>
-            <div className="space-y-3 mb-6 max-h-72 overflow-y-auto">
-              {jenisUjian.map(j => (
-                <button key={j.id}
-                  onClick={() => {
-                    setSpreadsheetJenisId(j.id);
-                    setShowSelectJenisModal(false);
-                    if (selectJenisMode === 'peserta') {
-                      setSpreadsheetPesertaRows(Array.from({length:10}, emptyPesertaRow));
-                      setShowSpreadsheetPeserta(true);
-                    } else {
-                      setSpreadsheetSoalRows(Array.from({length:10}, emptySoalRow));
-                      setShowSpreadsheetSoal(true);
-                    }
-                  }}
-                  className="w-full p-4 rounded-2xl border-2 border-[#E6E1E5] hover:border-[#6750A4] hover:bg-[#F3F0F5] text-left transition-all flex items-center gap-3 group"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-[#EADDFF] text-[#6750A4] flex items-center justify-center group-hover:bg-[#6750A4] group-hover:text-white transition-all flex-shrink-0">
-                    <BookOpen size={18} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-[#1C1B1F]">{j.nama}</p>
-                    <p className="text-xs text-[#49454F]">{Math.abs(j.timer_minutes)} menit · {j.is_active ? '🟢 Aktif' : '🔴 Nonaktif'}</p>
-                  </div>
-                  <ChevronRight size={18} className="text-[#CAC4D0] group-hover:text-[#6750A4]" />
-                </button>
-              ))}
-              {jenisUjian.length === 0 && (
-                <p className="text-center text-[#49454F] py-4 text-sm">Belum ada jenis ujian. Buat jenis ujian terlebih dahulu.</p>
-              )}
-            </div>
-            <button onClick={() => setShowSelectJenisModal(false)}
-              className="w-full py-3 rounded-2xl border border-[#E6E1E5] font-bold text-[#49454F] hover:bg-[#F3F0F5]">
-              Batal
-            </button>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Spreadsheet Modal Peserta */}
-
             {/* Spreadsheet Modal Soal */}
       {showSpreadsheetSoal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-2 md:p-4">
