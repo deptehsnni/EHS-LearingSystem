@@ -2658,6 +2658,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -2776,6 +2777,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -2896,6 +2898,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -3009,6 +3012,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -3088,6 +3092,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
@@ -3155,6 +3160,7 @@ export const AdminDashboard: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                </div>
                     <div className="bg-[#F3F0F5] rounded-2xl p-4">
                       <p className="text-sm font-black text-[#1C1B1F] mb-3">🛠️ Referensi Semua Tombol & Tools</p>
                       <div className="space-y-2">
