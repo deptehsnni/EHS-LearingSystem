@@ -485,7 +485,34 @@ export const AdminDashboard: React.FC = () => {
       message: 'Apakah Anda yakin ingin menghapus peserta ini? Seluruh riwayat ujian peserta ini juga akan dihapus.',
       onConfirm: async () => {
         try {
-          await supabase.from('hasil_ujian').delete().eq('nik', nik);
+          const deletePeserta = async (nik: string) => {
+  setShowConfirmModal({
+    show: true,
+    title: 'Hapus Peserta',
+    message: 'Apakah Anda yakin ingin menghapus peserta ini? Data hasil ujian akan tetap tersimpan.',
+    onConfirm: async () => {
+      try {
+        // ❗ JANGAN HAPUS hasil_ujian
+        await supabase.from('remedial_requests').delete().eq('nik', nik);
+
+        const { error } = await supabase
+          .from('peserta_master')
+          .delete()
+          .eq('nik', nik);
+
+        if (error) {
+          alert('Gagal menghapus peserta: ' + error.message);
+        } else {
+          fetchData();
+        }
+      } catch (err: any) {
+        alert('Terjadi kesalahan: ' + (err.message || 'Gagal menghapus peserta'));
+      } finally {
+        setShowConfirmModal(prev => ({ ...prev, show: false }));
+      }
+    }
+  });
+};
           await supabase.from('remedial_requests').delete().eq('nik', nik);
           const { error } = await supabase.from('peserta_master').delete().eq('nik', nik);
           if (error) {
