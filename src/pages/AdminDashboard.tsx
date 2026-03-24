@@ -758,7 +758,36 @@ export const AdminDashboard: React.FC = () => {
       onConfirm: async () => {
         try {
           // Delete related records first to avoid foreign key constraint errors
-          await supabase.from('hasil_ujian').delete().in('nik', selectedPeserta);
+          const bulkDeletePeserta = async () => {
+  setShowConfirmModal({
+    show: true,
+    title: 'Hapus Peserta',
+    message: `Apakah Anda yakin ingin menghapus ${selectedPeserta.length} peserta terpilih? Data hasil ujian akan tetap tersimpan.`,
+    onConfirm: async () => {
+      try {
+        // ❗ JANGAN HAPUS hasil_ujian
+        await supabase
+          .from('remedial_requests')
+          .delete()
+          .in('nik', selectedPeserta);
+
+        const { error } = await supabase
+          .from('peserta_master')
+          .delete()
+          .in('nik', selectedPeserta);
+
+        if (error) throw error;
+
+        setSelectedPeserta([]);
+        fetchData();
+        setShowConfirmModal(prev => ({ ...prev, show: false }));
+      } catch (err: any) {
+        console.error(err);
+        alert('Gagal menghapus peserta: ' + err.message);
+      }
+    }
+  });
+};
           await supabase.from('remedial_requests').delete().in('nik', selectedPeserta);
           
           const { error } = await supabase.from('peserta_master').delete().in('nik', selectedPeserta);
