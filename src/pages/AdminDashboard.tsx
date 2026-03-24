@@ -478,28 +478,15 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const deletePeserta = async (nik: string) => {
-    setShowConfirmModal({
-      show: true,
-      title: 'Hapus Peserta',
-      message: 'Apakah Anda yakin ingin menghapus peserta ini? Seluruh riwayat ujian peserta ini juga akan dihapus.',
-      onConfirm: async () => {
-        try {
-          const deletePeserta = async (nik: string) => {
+const deletePeserta = async (nik: string) => {
   setShowConfirmModal({
     show: true,
     title: 'Hapus Peserta',
     message: 'Apakah Anda yakin ingin menghapus peserta ini? Data hasil ujian akan tetap tersimpan.',
     onConfirm: async () => {
       try {
-        // ❗ JANGAN HAPUS hasil_ujian
         await supabase.from('remedial_requests').delete().eq('nik', nik);
-
-        const { error } = await supabase
-          .from('peserta_master')
-          .delete()
-          .eq('nik', nik);
-
+        const { error } = await supabase.from('peserta_master').delete().eq('nik', nik);
         if (error) {
           alert('Gagal menghapus peserta: ' + error.message);
         } else {
@@ -513,21 +500,6 @@ export const AdminDashboard: React.FC = () => {
     }
   });
 };
-          await supabase.from('remedial_requests').delete().eq('nik', nik);
-          const { error } = await supabase.from('peserta_master').delete().eq('nik', nik);
-          if (error) {
-            alert('Gagal menghapus peserta: ' + error.message);
-          } else {
-            fetchData();
-          }
-        } catch (err: any) {
-          alert('Terjadi kesalahan: ' + (err.message || 'Gagal menghapus peserta'));
-        } finally {
-          setShowConfirmModal(prev => ({ ...prev, show: false }));
-        }
-      }
-    });
-  };
 
   const deleteSoal = async (id: string) => {
     setShowConfirmModal({
@@ -750,34 +722,16 @@ export const AdminDashboard: React.FC = () => {
     });
   };
 
-  const bulkDeletePeserta = async () => {
-    setShowConfirmModal({
-      show: true,
-      title: 'Hapus Peserta',
-      message: `Apakah Anda yakin ingin menghapus ${selectedPeserta.length} peserta terpilih? Seluruh riwayat ujian peserta tersebut juga akan dihapus.`,
-      onConfirm: async () => {
-        try {
-          // Delete related records first to avoid foreign key constraint errors
-          const bulkDeletePeserta = async () => {
+const bulkDeletePeserta = async () => {
   setShowConfirmModal({
     show: true,
     title: 'Hapus Peserta',
     message: `Apakah Anda yakin ingin menghapus ${selectedPeserta.length} peserta terpilih? Data hasil ujian akan tetap tersimpan.`,
     onConfirm: async () => {
       try {
-        // ❗ JANGAN HAPUS hasil_ujian
-        await supabase
-          .from('remedial_requests')
-          .delete()
-          .in('nik', selectedPeserta);
-
-        const { error } = await supabase
-          .from('peserta_master')
-          .delete()
-          .in('nik', selectedPeserta);
-
+        await supabase.from('remedial_requests').delete().in('nik', selectedPeserta);
+        const { error } = await supabase.from('peserta_master').delete().in('nik', selectedPeserta);
         if (error) throw error;
-
         setSelectedPeserta([]);
         fetchData();
         setShowConfirmModal(prev => ({ ...prev, show: false }));
