@@ -212,7 +212,8 @@ export const AdminDashboard: React.FC = () => {
     passing_score: 70,
     commitment_title: 'Pakta Integritas',
     commitment_content: 'Dengan ini saya menyatakan bahwa saya akan mengerjakan ujian ini dengan jujur dan tidak akan melakukan kecurangan dalam bentuk apapun.',
-    commitment_checkbox_text: 'Saya telah mengisi data dengan benar dan menyetujui pakta integritas.'
+    commitment_checkbox_text: 'Saya telah mengisi data dengan benar dan menyetujui pakta integritas.',
+    tipe_ujian: 'khusus' as 'khusus' | 'umum'
   });
 
   const [showUploadPesertaModal, setShowUploadPesertaModal] = useState(false);
@@ -396,7 +397,8 @@ export const AdminDashboard: React.FC = () => {
         passing_score: 70,
         commitment_title: 'Pakta Integritas',
         commitment_content: 'Dengan ini saya menyatakan bahwa saya akan mengerjakan ujian ini dengan jujur dan tidak akan melakukan kecurangan dalam bentuk apapun.',
-        commitment_checkbox_text: 'Saya telah mengisi data dengan benar dan menyetujui pakta integritas.'
+        commitment_checkbox_text: 'Saya telah mengisi data dengan benar dan menyetujui pakta integritas.',
+        tipe_ujian: 'khusus' as 'khusus' | 'umum'
       });
       fetchData();
     } catch (err) {
@@ -554,7 +556,8 @@ export const AdminDashboard: React.FC = () => {
       passing_score: jenis.passing_score || 70,
       commitment_title: jenis.commitment_title || 'Pakta Integritas',
       commitment_content: jenis.commitment_content || 'Dengan ini saya menyatakan bahwa saya akan mengerjakan ujian ini dengan jujur dan tidak akan melakukan kecurangan dalam bentuk apapun.',
-      commitment_checkbox_text: jenis.commitment_checkbox_text || 'Saya telah mengisi data dengan benar dan menyetujui pakta integritas.'
+      commitment_checkbox_text: jenis.commitment_checkbox_text || 'Saya telah mengisi data dengan benar dan menyetujui pakta integritas.',
+      tipe_ujian: jenis.tipe_ujian || 'khusus'
     });
     setShowEditJenisModal(true);
   };
@@ -661,7 +664,8 @@ export const AdminDashboard: React.FC = () => {
           passing_score: editingJenis.passing_score,
           commitment_title: editingJenis.commitment_title,
           commitment_content: editingJenis.commitment_content,
-          commitment_checkbox_text: editingJenis.commitment_checkbox_text
+          commitment_checkbox_text: editingJenis.commitment_checkbox_text,
+          tipe_ujian: editingJenis.tipe_ujian || 'khusus'
         })
         .eq('id', editingJenis.id);
       
@@ -998,7 +1002,7 @@ export const AdminDashboard: React.FC = () => {
       'Nilai': r.nilai,
       'Nama': r.nama,
       'NIK': r.nik,
-      'Perusahaan': peserta.find(p => p.nik === r.nik)?.perusahaan || '-',
+      'Perusahaan': r.perusahaan || peserta.find(p => p.nik === r.nik)?.perusahaan || '-',
       'Status Lulus': r.status_lulus ? 'LULUS' : 'TIDAK LULUS',
       'Status Perkawinan': r.profil_data.status || '-',
       'Agama': r.profil_data.agama || '-',
@@ -1744,6 +1748,7 @@ export const AdminDashboard: React.FC = () => {
                     <th className="px-6 py-4 font-bold">Durasi</th>
                     <th className="px-6 py-4 font-bold">Limit 1x/Hari</th>
                     <th className="px-6 py-4 font-bold">Komitmen</th>
+                    <th className="px-6 py-4 font-bold">Tipe</th>
                     <th className="px-6 py-4 font-bold">Status</th>
                     <th className="px-6 py-4 font-bold">Aksi</th>
                   </tr>
@@ -1758,6 +1763,7 @@ export const AdminDashboard: React.FC = () => {
                       <td className="px-6 py-4">{Math.abs(j.timer_minutes)} Menit</td>
                       <td className="px-6 py-4"><span className={clsx("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase", j.timer_minutes < 0 ? "bg-[#E3F2FD] text-[#1565C0]" : "bg-[#F5F5F5] text-[#757575]")}>{j.timer_minutes < 0 ? 'Ya' : 'Tidak'}</span></td>
                       <td className="px-6 py-4">{j.has_commitment ? <span className="text-[#2E7D32] flex items-center gap-1 text-xs font-medium"><CheckCircle2 size={14} /> Aktif</span> : <span className="text-[#49454F] text-xs">Tidak Ada</span>}</td>
+                      <td className="px-6 py-4"><span className={clsx("px-2 py-0.5 rounded-full text-[10px] font-bold", j.tipe_ujian === 'umum' ? "bg-[#FFF3E0] text-[#E65100]" : "bg-[#EDE7F6] text-[#4527A0]")}>{j.tipe_ujian === 'umum' ? '🌐 Umum' : '🔒 Khusus'}</span></td>
                       <td className="px-6 py-4"><button onClick={() => toggleJenisStatus(j.id, j.is_active)} className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase cursor-pointer transition-all hover:opacity-80 ${j.is_active ? 'bg-[#E8F5E9] text-[#2E7D32]' : 'bg-[#F9DEDC] text-[#B3261E]'}`}>{j.is_active ? '🟢 ON' : '🔴 OFF'}</button></td>
                       <td className="px-6 py-4">
                         <div className="flex gap-1">
@@ -1791,6 +1797,7 @@ export const AdminDashboard: React.FC = () => {
                         <span className="text-[10px] bg-[#F3F0F5] text-[#49454F] px-2 py-0.5 rounded-full">{Math.abs(j.timer_minutes)} menit</span>
                         <span className={clsx("text-[10px] px-2 py-0.5 rounded-full font-bold", j.timer_minutes < 0 ? "bg-[#E3F2FD] text-[#1565C0]" : "bg-[#F5F5F5] text-[#757575]")}>{j.timer_minutes < 0 ? 'Limit 1x/hari' : 'Tanpa limit'}</span>
                         {j.has_commitment && <span className="text-[10px] bg-[#E8F5E9] text-[#2E7D32] px-2 py-0.5 rounded-full font-bold">Komitmen</span>}
+                        <span className={clsx("text-[10px] px-2 py-0.5 rounded-full font-bold", j.tipe_ujian === 'umum' ? "bg-[#FFF3E0] text-[#E65100]" : "bg-[#EDE7F6] text-[#4527A0]")}>{j.tipe_ujian === 'umum' ? '🌐 Umum' : '🔒 Khusus'}</span>
                       </div>
                       <div className="flex gap-1">
                         <button onClick={() => copyExamLink(j.id)} className="p-2 text-[#6750A4] hover:bg-[#EADDFF] rounded-lg" title="Salin Link"><Copy size={16} /></button>
@@ -2093,7 +2100,7 @@ export const AdminDashboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-[#1C1B1F]">{r.nama}</p>
-                        <p className="text-xs text-[#49454F] font-mono">{r.nik}</p>
+                        <p className="text-xs text-[#49454F] font-mono">{r.nik || '-'}</p>
                       </td>
                       <td className="px-6 py-4 text-sm font-medium">
                         {r.perusahaan || '-'}
@@ -2273,14 +2280,14 @@ export const AdminDashboard: React.FC = () => {
                     <tbody className="divide-y divide-[#E6E1E5]">
                       {results
                         .filter(r => r.jenis_ujian_id === selectedHasilJenis && format(new Date(r.waktu_selesai), 'yyyy-MM-dd') === selectedHasilDate)
-                        .filter(r => r.nama.toLowerCase().includes(searchTerm.toLowerCase()) || r.nik.includes(searchTerm))
+                        .filter(r => r.nama.toLowerCase().includes(searchTerm.toLowerCase()) || (r.nik && r.nik.includes(searchTerm)))
                         .map((r) => (
                         <tr key={r.id} className="hover:bg-[#FDFCFB] transition-colors">
                           <td className="px-4 md:px-6 py-4">
                             <p className="font-bold text-[#1C1B1F] text-xs md:text-sm">{r.nama}</p>
                           </td>
                           <td className="px-4 md:px-6 py-4">
-                            <p className="text-[10px] text-[#49454F] font-mono">{r.nik}</p>
+                            <p className="text-[10px] text-[#49454F] font-mono">{r.nik || '-'}</p>
                           </td>
                           <td className="px-4 md:px-6 py-4 text-center">
                             <span className={`text-sm md:text-base font-black ${r.nilai >= 70 ? 'text-[#2E7D32]' : 'text-[#B3261E]'}`}>
@@ -3046,13 +3053,34 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
               )}
+              <div>
+                <label className="block text-sm font-medium text-[#49454F] mb-2">Tipe Ujian</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setNewJenis({...newJenis, tipe_ujian: 'khusus'})}
+                    className={`p-3 rounded-2xl border-2 text-left transition-all ${newJenis.tipe_ujian === 'khusus' ? 'border-[#6750A4] bg-[#EADDFF]' : 'border-[#E6E1E5] bg-[#F3F0F5]'}`}
+                  >
+                    <div className="font-bold text-sm text-[#1C1B1F]">🔒 Khusus</div>
+                    <div className="text-[10px] text-[#49454F] mt-0.5">Peserta harus terdaftar</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewJenis({...newJenis, tipe_ujian: 'umum'})}
+                    className={`p-3 rounded-2xl border-2 text-left transition-all ${newJenis.tipe_ujian === 'umum' ? 'border-[#E65100] bg-[#FFF3E0]' : 'border-[#E6E1E5] bg-[#F3F0F5]'}`}
+                  >
+                    <div className="font-bold text-sm text-[#1C1B1F]">🌐 Umum</div>
+                    <div className="text-[10px] text-[#49454F] mt-0.5">Siapa saja bisa ikut</div>
+                  </button>
+                </div>
+              </div>
               <div className="flex items-center justify-between p-4 bg-[#F3F0F5] rounded-2xl">
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-[#49454F]">Batasi 1x Per Hari</span>
                   <span className="text-[10px] text-[#49454F]">Kecuali diizinkan Admin</span>
                 </div>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={newJenis.limit_one_per_day}
                   onChange={e => setNewJenis({...newJenis, limit_one_per_day: e.target.checked})}
                   className="w-6 h-6 rounded border-[#6750A4] text-[#6750A4] focus:ring-[#6750A4]"
@@ -3211,13 +3239,34 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
               )}
+              <div>
+                <label className="block text-sm font-medium text-[#49454F] mb-2">Tipe Ujian</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingJenis({...editingJenis, tipe_ujian: 'khusus'})}
+                    className={`p-3 rounded-2xl border-2 text-left transition-all ${editingJenis.tipe_ujian === 'khusus' || !editingJenis.tipe_ujian ? 'border-[#6750A4] bg-[#EADDFF]' : 'border-[#E6E1E5] bg-[#F3F0F5]'}`}
+                  >
+                    <div className="font-bold text-sm text-[#1C1B1F]">🔒 Khusus</div>
+                    <div className="text-[10px] text-[#49454F] mt-0.5">Peserta harus terdaftar</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingJenis({...editingJenis, tipe_ujian: 'umum'})}
+                    className={`p-3 rounded-2xl border-2 text-left transition-all ${editingJenis.tipe_ujian === 'umum' ? 'border-[#E65100] bg-[#FFF3E0]' : 'border-[#E6E1E5] bg-[#F3F0F5]'}`}
+                  >
+                    <div className="font-bold text-sm text-[#1C1B1F]">🌐 Umum</div>
+                    <div className="text-[10px] text-[#49454F] mt-0.5">Siapa saja bisa ikut</div>
+                  </button>
+                </div>
+              </div>
               <div className="flex items-center justify-between p-4 bg-[#F3F0F5] rounded-2xl">
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-[#49454F]">Batasi 1x Per Hari</span>
                   <span className="text-[10px] text-[#49454F]">Kecuali diizinkan Admin</span>
                 </div>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={editingJenis.limit_one_per_day}
                   onChange={e => setEditingJenis({...editingJenis, limit_one_per_day: e.target.checked})}
                   className="w-6 h-6 rounded border-[#6750A4] text-[#6750A4] focus:ring-[#6750A4]"
@@ -3226,7 +3275,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#49454F] mb-2">Jumlah Soal</label>
-                  <input 
+                  <input
                     type="number" required min="1"
                     value={editingJenis.soal_display_count}
                     onChange={e => setEditingJenis({...editingJenis, soal_display_count: parseInt(e.target.value)})}
