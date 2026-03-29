@@ -50,6 +50,39 @@ export const LandingPage: React.FC = () => {
     setError(null);
 
     try {
+      // --- Cek apakah ujian yang dituju adalah Ujian Umum ---
+      const preferredExamId = localStorage.getItem('preferred_exam');
+      if (preferredExamId) {
+        const { data: jenisCheck, error: jenisCheckError } = await supabase
+          .from('jenis_ujian')
+          .select('*')
+          .eq('id', preferredExamId)
+          .single();
+
+        if (jenisCheck && !jenisCheckError && jenisCheck.tipe_ujian === 'umum') {
+          // Ujian Umum: siapa saja bisa ikut, skip peserta_master lookup
+          if (jenisCheck.is_active === false) {
+            setInactiveExamName(jenisCheck.nama || 'Ujian');
+            setShowInactiveModal(true);
+            setLoading(false);
+            return;
+          }
+          // Simpan data minimal peserta umum (nama & dept diisi di ParticipantFlow step 1)
+          const participantUmum = {
+            nik: nik.trim(),
+            nama: '',
+            perusahaan: '',
+            kategori: 'Visitor',
+            tipe_ujian: 'umum',
+            allowed_jenis_id: preferredExamId,
+          };
+          localStorage.setItem('ehs_participant', JSON.stringify(participantUmum));
+          navigate('/induction');
+          return;
+        }
+      }
+      // --- End Ujian Umum check, lanjut flow Khusus ---
+
       const { data, error: fetchError } = await supabase
         .from('peserta_master')
         .select('*')
@@ -60,7 +93,6 @@ export const LandingPage: React.FC = () => {
         setError('NIK / No. ID tidak terdaftar. Silakan hubungi Admin.');
       } else {
         // Check for daily limit before proceeding
-        const preferredExamId = localStorage.getItem('preferred_exam');
         const examId = preferredExamId || data.allowed_jenis_id;
 
         if (examId) {
