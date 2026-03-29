@@ -31,8 +31,17 @@
     soal_display_count INTEGER DEFAULT 20,
     passing_score INTEGER DEFAULT 70,
     created_by TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    tipe_ujian TEXT CHECK (tipe_ujian IN ('khusus', 'umum')) DEFAULT 'khusus'
   );
+
+  -- MIGRATION (jalankan ini jika tabel sudah ada):
+  -- ALTER TABLE jenis_ujian ADD COLUMN IF NOT EXISTS tipe_ujian TEXT CHECK (tipe_ujian IN ('khusus', 'umum')) DEFAULT 'khusus';
+
+  -- MIGRATION WAJIB untuk fitur Ujian Umum:
+  -- Ujian Umum menggunakan ID bebas yang tidak terdaftar di peserta_master,
+  -- sehingga FK constraint pada hasil_ujian.nik harus dihapus.
+  -- ALTER TABLE hasil_ujian DROP CONSTRAINT IF EXISTS hasil_ujian_nik_fkey;
 
   -- Bank Soal Table
   CREATE TABLE soal (
