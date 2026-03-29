@@ -16,6 +16,7 @@ export interface PesertaMaster {
   allowed_jenis_id?: string;
   is_remedial?: boolean;
   created_at: string;
+  tipe_ujian?: 'umum'; // Hanya untuk peserta sementara Ujian Umum
 }
 
 export interface JenisUjian {
@@ -28,6 +29,7 @@ export interface JenisUjian {
   limit_one_per_day?: boolean;
   commitment_title?: string;
   commitment_content?: string;
+  tipe_ujian?: 'khusus' | 'umum'; // 'khusus' = peserta terdaftar, 'umum' = siapa saja
 }
 
 export interface Soal {
