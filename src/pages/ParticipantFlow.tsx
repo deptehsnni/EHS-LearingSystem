@@ -47,6 +47,7 @@ export const ParticipantFlow: React.FC = () => {
   const [sessionInactive, setSessionInactive] = useState(false);
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [kickedByOtherDevice, setKickedByOtherDevice] = useState(false);
+  const [umumFormData, setUmumFormData] = useState({ nama: '', departemen: '' });
 
   const navigate = useNavigate();
 
@@ -89,8 +90,9 @@ export const ParticipantFlow: React.FC = () => {
     setParticipant(p);
 
     // Update last_active segera saat halaman dibuka agar sesi dianggap aktif
+    // Skip untuk Ujian Umum (nik null, tidak ada sesi)
     const localToken = localStorage.getItem('ehs_session_token');
-    if (localToken) {
+    if (localToken && p.nik && p.tipe_ujian !== 'umum') {
       supabase
         .from('peserta_sessions')
         .update({ last_active: new Date().toISOString() })
@@ -138,6 +140,8 @@ export const ParticipantFlow: React.FC = () => {
   // Cek sesi ujian masih aktif setiap 30 detik
   useEffect(() => {
     if (!examStarted || examResult || !currentJenis) return;
+    // Skip session check untuk Ujian Umum
+    if (participant?.tipe_ujian === 'umum') return;
     const localToken = localStorage.getItem('ehs_session_token');
 
     const checkSession = async () => {
@@ -262,6 +266,8 @@ export const ParticipantFlow: React.FC = () => {
   }, [examStarted, examResult]);
 
   if (!participant) return null;
+
+  const isUmum = (participant as any)?.tipe_ujian === 'umum';
 
   const handleLogout = () => {
     const token = localStorage.getItem('ehs_session_token');
@@ -391,18 +397,23 @@ export const ParticipantFlow: React.FC = () => {
     const passingScore = currentJenis?.passing_score || 70;
     const isLulus = score >= passingScore;
 
+    const isUmumSubmit = (participant as any)?.tipe_ujian === 'umum';
     const result = {
       nik: participant?.nik,
-      nama: participant?.nama,
-      perusahaan: participant?.perusahaan,
+      nama: isUmumSubmit ? umumFormData.nama : participant?.nama,
+      perusahaan: isUmumSubmit ? (umumFormData.departemen || '-') : participant?.perusahaan,
       nilai: score,
       status_lulus: isLulus,
-      profil_data: { 
-        ...profileData, 
+      profil_data: {
+        ...profileData,
         tab_violations: tabViolations,
         screenshot_violations: screenshotViolations,
         copy_violations: copyViolations,
-        is_remedial: participant?.is_remedial || false
+        is_remedial: participant?.is_remedial || false,
+        ...(isUmumSubmit ? {
+          departemen: umumFormData.departemen,
+          tipe_ujian: 'umum'
+        } : {})
       },
       jenis_ujian_id: activeExamId || currentJenis?.id || participant?.allowed_jenis_id,
       waktu_selesai: new Date().toISOString()
@@ -677,36 +688,68 @@ export const ParticipantFlow: React.FC = () => {
         </AnimatePresence>
 
         {/* Progress Bar */}
-        <div className="mb-6 sm:mb-12 relative px-2 sm:px-4">
-          <div className="absolute top-4 sm:top-5 left-6 sm:left-9 right-6 sm:right-9 h-[2px] bg-[#E6E1E5]" />
-          <div
-            className="absolute top-4 sm:top-5 left-6 sm:left-9 h-[2px] bg-[#6750A4] transition-all duration-500"
-            style={{
-              width: step === 1 ? '0%' :
-                     step === 2 ? '33.33%' :
-                     step === 3 ? '66.66%' : '100%'
-            }}
-          />
-          <div className="flex items-center justify-between relative z-10">
-            {[1, 2, 3, 4].map((s) => (
-              <div key={s} className="flex flex-col items-center">
-                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-500 text-sm sm:text-base ${
-                  step >= s ? 'bg-[#6750A4] text-white' : 'bg-[#E6E1E5] text-[#49454F]'
-                }`}>
-                  {step > s ? <CheckCircle2 size={16} /> : s}
+        {isUmum ? (
+          /* Ujian Umum: 3 langkah (Data → Ujian → Hasil) */
+          <div className="mb-6 sm:mb-12 relative px-2 sm:px-4">
+            <div className="absolute top-4 sm:top-5 left-6 sm:left-9 right-6 sm:right-9 h-[2px] bg-[#E6E1E5]" />
+            <div
+              className="absolute top-4 sm:top-5 left-6 sm:left-9 h-[2px] bg-[#E65100] transition-all duration-500"
+              style={{ width: step === 1 ? '0%' : step === 3 ? '50%' : '100%' }}
+            />
+            <div className="flex items-center justify-between relative z-10">
+              {[
+                { s: 1, label: 'Data' },
+                { s: 3, label: 'Ujian' },
+                { s: 4, label: 'Hasil' }
+              ].map(({ s, label }, idx) => (
+                <div key={s} className="flex flex-col items-center">
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-500 text-sm sm:text-base ${
+                    step >= s ? 'bg-[#E65100] text-white' : 'bg-[#E6E1E5] text-[#49454F]'
+                  }`}>
+                    {step > s ? <CheckCircle2 size={16} /> : idx + 1}
+                  </div>
+                  <span className={`text-[9px] sm:text-[10px] mt-1 sm:mt-2 font-medium uppercase tracking-wider ${
+                    step >= s ? 'text-[#E65100]' : 'text-[#49454F]'
+                  }`}>
+                    {label}
+                  </span>
                 </div>
-                <span className={`text-[9px] sm:text-[10px] mt-1 sm:mt-2 font-medium uppercase tracking-wider ${
-                  step >= s ? 'text-[#6750A4]' : 'text-[#49454F]'
-                }`}>
-                  {['Verifikasi', 'Data', 'Ujian', 'Hasil'][s-1]}
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Ujian Khusus: 4 langkah (Verifikasi → Data → Ujian → Hasil) */
+          <div className="mb-6 sm:mb-12 relative px-2 sm:px-4">
+            <div className="absolute top-4 sm:top-5 left-6 sm:left-9 right-6 sm:right-9 h-[2px] bg-[#E6E1E5]" />
+            <div
+              className="absolute top-4 sm:top-5 left-6 sm:left-9 h-[2px] bg-[#6750A4] transition-all duration-500"
+              style={{
+                width: step === 1 ? '0%' :
+                       step === 2 ? '33.33%' :
+                       step === 3 ? '66.66%' : '100%'
+              }}
+            />
+            <div className="flex items-center justify-between relative z-10">
+              {[1, 2, 3, 4].map((s) => (
+                <div key={s} className="flex flex-col items-center">
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-500 text-sm sm:text-base ${
+                    step >= s ? 'bg-[#6750A4] text-white' : 'bg-[#E6E1E5] text-[#49454F]'
+                  }`}>
+                    {step > s ? <CheckCircle2 size={16} /> : s}
+                  </div>
+                  <span className={`text-[9px] sm:text-[10px] mt-1 sm:mt-2 font-medium uppercase tracking-wider ${
+                    step >= s ? 'text-[#6750A4]' : 'text-[#49454F]'
+                  }`}>
+                    {['Verifikasi', 'Data', 'Ujian', 'Hasil'][s-1]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
-          {/* Step 1: Verification */}
+          {/* Step 1: Verification (Khusus) / Data Form (Umum) */}
           {step === 1 && (
             <motion.div
               key="step1"
@@ -715,49 +758,114 @@ export const ParticipantFlow: React.FC = () => {
               exit={{ opacity: 0, x: -20 }}
               className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm border border-[#E6E1E5]"
             >
-              <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
-                <User className="text-[#6750A4]" /> Konfirmasi Identitas
-              </h2>
+              {isUmum ? (
+                /* Ujian Umum: Form sederhana (Nama + Departemen) */
+                <>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-2 flex items-center gap-3">
+                    <User className="text-[#E65100]" /> Data Peserta
+                  </h2>
+                  <p className="text-[#49454F] text-sm mb-6">Isi data diri Anda untuk memulai ujian.</p>
 
-              {/* Jenis Ujian - informasi utama */}
-              {currentJenis && (
-                <div className="bg-[#6750A4] rounded-2xl p-4 mb-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <ClipboardCheck size={20} className="text-white" />
+                  {currentJenis && (
+                    <div className="bg-[#E65100] rounded-2xl p-4 mb-6 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                        <ClipboardCheck size={20} className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white/70 text-xs uppercase tracking-wider font-semibold">🌐 Ujian Umum</p>
+                        <p className="text-white font-black text-base sm:text-lg leading-tight truncate">{currentJenis.nama}</p>
+                        <p className="text-white/70 text-xs mt-0.5">{Math.abs(currentJenis.timer_minutes)} menit · Skor lulus: {currentJenis.passing_score || 70}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <form onSubmit={(e) => { e.preventDefault(); startExam(); }} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#49454F] mb-2">
+                        Nama Lengkap <span className="text-[#B3261E]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={umumFormData.nama}
+                        onChange={e => setUmumFormData({ ...umumFormData, nama: e.target.value })}
+                        placeholder="Masukkan nama lengkap Anda"
+                        className="w-full p-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#E65100] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#49454F] mb-2">
+                        Departemen / Instansi
+                      </label>
+                      <input
+                        type="text"
+                        value={umumFormData.departemen}
+                        onChange={e => setUmumFormData({ ...umumFormData, departemen: e.target.value })}
+                        placeholder="Contoh: Departemen Produksi / PT. ABC"
+                        className="w-full p-4 bg-[#F3F0F5] border-none rounded-2xl focus:ring-2 focus:ring-[#E65100] outline-none"
+                      />
+                    </div>
+                    <div className="flex gap-4 pt-2">
+                      <button type="button" onClick={handleLogout} className="flex-1 py-4 rounded-2xl border border-[#E6E1E5] font-bold text-[#B3261E] flex items-center justify-center gap-2">
+                        <LogOut size={18} /> Keluar
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={!umumFormData.nama.trim() || loading}
+                        className="flex-[2] py-4 rounded-2xl bg-[#E65100] text-white font-bold flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+                      >
+                        {loading ? 'Menyiapkan...' : <><span>Mulai Ujian</span> <ChevronRight size={18} /></>}
+                      </button>
+                    </div>
+                  </form>
+                </>
+              ) : (
+                /* Ujian Khusus: Konfirmasi identitas dari peserta_master */
+                <>
+                  <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
+                    <User className="text-[#6750A4]" /> Konfirmasi Identitas
+                  </h2>
+
+                  {currentJenis && (
+                    <div className="bg-[#6750A4] rounded-2xl p-4 mb-4 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                        <ClipboardCheck size={20} className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white/70 text-xs uppercase tracking-wider font-semibold">Jenis Ujian</p>
+                        <p className="text-white font-black text-base sm:text-lg leading-tight truncate">{currentJenis.nama}</p>
+                        <p className="text-white/70 text-xs mt-0.5">{Math.abs(currentJenis.timer_minutes)} menit · Skor lulus: {currentJenis.passing_score || 70}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="bg-[#F3F0F5] p-4 sm:p-6 rounded-2xl space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                    <div className="flex justify-between border-b border-[#E6E1E5] pb-3">
+                      <span className="text-[#49454F]">Nama Lengkap</span>
+                      <span className="font-bold text-sm sm:text-lg text-right">{participant.nama}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-[#E6E1E5] pb-3">
+                      <span className="text-[#49454F]">NIK KTP / No. ID Karyawan</span>
+                      <span className="font-mono font-bold text-sm sm:text-lg">{participant.nik}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#49454F]">Perusahaan</span>
+                      <span className="font-bold text-sm sm:text-lg text-right">{participant.perusahaan}</span>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white/70 text-xs uppercase tracking-wider font-semibold">Jenis Ujian</p>
-                    <p className="text-white font-black text-base sm:text-lg leading-tight truncate">{currentJenis.nama}</p>
-                    <p className="text-white/70 text-xs mt-0.5">{Math.abs(currentJenis.timer_minutes)} menit · Skor lulus: {currentJenis.passing_score || 70}</p>
+                  <p className="text-[#49454F] mb-8 italic">
+                    *Pastikan data di atas sudah sesuai dengan KTP Anda sebelum melanjutkan.
+                  </p>
+                  <div className="flex gap-4">
+                    <button onClick={handleLogout} className="flex-1 py-4 rounded-2xl border border-[#E6E1E5] font-bold text-[#B3261E] flex items-center justify-center gap-2">
+                      <LogOut size={18} /> Keluar
+                    </button>
+                    <button onClick={nextStep} className="flex-[2] py-4 rounded-2xl bg-[#6750A4] text-white font-bold flex items-center justify-center gap-2 shadow-md">
+                      Data Sudah Benar <ChevronRight size={18} />
+                    </button>
                   </div>
-                </div>
+                </>
               )}
-
-              <div className="bg-[#F3F0F5] p-4 sm:p-6 rounded-2xl space-y-3 sm:space-y-4 mb-6 sm:mb-8">
-                <div className="flex justify-between border-b border-[#E6E1E5] pb-3">
-                  <span className="text-[#49454F]">Nama Lengkap</span>
-                  <span className="font-bold text-sm sm:text-lg text-right">{participant.nama}</span>
-                </div>
-                <div className="flex justify-between border-b border-[#E6E1E5] pb-3">
-                  <span className="text-[#49454F]">NIK KTP / No. ID Karyawan</span>
-                  <span className="font-mono font-bold text-sm sm:text-lg">{participant.nik}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#49454F]">Perusahaan</span>
-                  <span className="font-bold text-sm sm:text-lg text-right">{participant.perusahaan}</span>
-                </div>
-              </div>
-              <p className="text-[#49454F] mb-8 italic">
-                *Pastikan data di atas sudah sesuai dengan KTP Anda sebelum melanjutkan.
-              </p>
-              <div className="flex gap-4">
-                <button onClick={handleLogout} className="flex-1 py-4 rounded-2xl border border-[#E6E1E5] font-bold text-[#B3261E] flex items-center justify-center gap-2">
-                  <LogOut size={18} /> Keluar
-                </button>
-                <button onClick={nextStep} className="flex-[2] py-4 rounded-2xl bg-[#6750A4] text-white font-bold flex items-center justify-center gap-2 shadow-md">
-                  Data Sudah Benar <ChevronRight size={18} />
-                </button>
-              </div>
             </motion.div>
           )}
 
@@ -903,7 +1011,7 @@ export const ParticipantFlow: React.FC = () => {
                     <div key={i} className="flex gap-8 whitespace-nowrap">
                       {Array.from({ length: 6 }).map((_, j) => (
                         <span key={j} className="text-sm font-bold text-[#6750A4] shrink-0">
-                          {participant.nama} · {participant.nik} · {participant.perusahaan}
+                          {isUmum ? umumFormData.nama : participant.nama} · {participant.nik} · {isUmum ? (umumFormData.departemen || '-') : participant.perusahaan}
                         </span>
                       ))}
                     </div>
@@ -914,9 +1022,9 @@ export const ParticipantFlow: React.FC = () => {
               <div className="fixed inset-0 pointer-events-none z-[48] overflow-hidden select-none flex items-center justify-center"
                 style={{ opacity: 0.06 }}>
                 <div className="text-center" style={{ transform: 'rotate(-35deg)' }}>
-                  <p className="text-5xl sm:text-8xl font-black text-[#6750A4] leading-tight">{participant.nama}</p>
+                  <p className="text-5xl sm:text-8xl font-black text-[#6750A4] leading-tight">{isUmum ? umumFormData.nama : participant.nama}</p>
                   <p className="text-3xl sm:text-5xl font-black text-[#6750A4]">{participant.nik}</p>
-                  <p className="text-xl sm:text-3xl font-bold text-[#6750A4]">{participant.perusahaan}</p>
+                  <p className="text-xl sm:text-3xl font-bold text-[#6750A4]">{isUmum ? (umumFormData.departemen || '-') : participant.perusahaan}</p>
                 </div>
               </div>
 
@@ -950,7 +1058,7 @@ export const ParticipantFlow: React.FC = () => {
                     {/* Watermark per kartu soal */}
                     <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center" style={{opacity: 0.045}}>
                       <p className="text-xl sm:text-3xl font-black text-[#6750A4] whitespace-nowrap" style={{transform: 'rotate(-35deg)'}}>
-                        {participant.nama} · {participant.nik} · {participant.perusahaan}
+                        {isUmum ? umumFormData.nama : participant.nama} · {participant.nik} · {isUmum ? (umumFormData.departemen || '-') : participant.perusahaan}
                       </p>
                     </div>
                     <div className="flex items-start gap-3 mb-4 sm:mb-6">
@@ -1063,7 +1171,7 @@ export const ParticipantFlow: React.FC = () => {
                 </div>
               </div>
 
-              {!examResult.status_lulus && (
+              {!examResult.status_lulus && !isUmum && (
                 <div className="bg-[#FFF8E1] p-6 rounded-2xl border border-[#FFE082] mb-8 text-left">
                   <h4 className="font-bold text-[#F57F17] flex items-center gap-2 mb-2">
                     <AlertTriangle size={18} /> Remedial
@@ -1071,8 +1179,8 @@ export const ParticipantFlow: React.FC = () => {
                   <p className="text-sm text-[#795548]">
                     Batas nilai kelulusan adalah {currentJenis?.passing_score || 70}. Silakan hubungi Admin untuk meminta akses ujian ulang (Remedial).
                   </p>
-                  <button 
-                    onClick={handleRequestRemedial}
+                  <button
+                    onClick={() => handleRequestRemedial()}
                     disabled={loading}
                     className="mt-4 w-full py-3 bg-[#F57F17] text-white rounded-xl font-bold text-sm shadow-sm disabled:opacity-50"
                   >
