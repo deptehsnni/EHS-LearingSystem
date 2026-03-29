@@ -2988,8 +2988,8 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Add Jenis Modal */}
       {showAddJenisModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl border border-[#E6E1E5]">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl border border-[#E6E1E5] my-auto">
             <h3 className="text-2xl font-bold mb-6">Tambah Jenis Ujian</h3>
             <form onSubmit={handleSaveJenis} className="space-y-6">
               <div>
@@ -3177,8 +3177,8 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {showEditJenisModal && editingJenis && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl border border-[#E6E1E5]">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-start justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl border border-[#E6E1E5] my-auto">
             <h3 className="text-2xl font-bold mb-6">Edit Jenis Ujian</h3>
             <form onSubmit={handleUpdateJenis} className="space-y-4">
               <div>
