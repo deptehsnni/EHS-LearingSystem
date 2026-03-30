@@ -1314,7 +1314,7 @@ export const AdminDashboard: React.FC = () => {
                 {activeTab === 'requests' && 'Request Remedial'}
                 {activeTab === 'settings' && 'Pengaturan Sistem'}
               </h2>
-              <p className="text-sm text-[#49454F]">Selamat datang kembali, {admin.Username}.</p>
+              <p className="text-sm text-[#49454F]">Selamat datang kembali, {admin.username}.</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
