@@ -1496,7 +1496,7 @@ export const AdminDashboard: React.FC = () => {
                 <div>
                   <h3 className="text-3xl font-black text-[#1C1B1F]">{stats.avgNilai}</h3>
                   <p className="text-xs font-bold text-[#49454F] mt-0.5">Rata-rata Nilai</p>
-                  <p className="text-[10px] text-[#9CA3AF] mt-0.5">KKM = 70</p>
+                  <p className="text-[10px] text-[#9CA3AF] mt-0.5">KKM = 75</p>
                 </div>
               </div>
 
