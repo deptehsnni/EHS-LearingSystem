@@ -40,8 +40,9 @@
 
   -- MIGRATION WAJIB untuk fitur Ujian Umum:
   -- Ujian Umum menggunakan ID bebas yang tidak terdaftar di peserta_master,
-  -- sehingga FK constraint pada hasil_ujian.nik harus dihapus.
-  -- ALTER TABLE hasil_ujian DROP CONSTRAINT IF EXISTS hasil_ujian_nik_fkey;
+  -- sehingga FK constraint pada tabel terkait nik harus dihapus.
+  ALTER TABLE hasil_ujian DROP CONSTRAINT IF EXISTS hasil_ujian_nik_fkey;
+  ALTER TABLE request_retry_log DROP CONSTRAINT IF EXISTS request_retry_log_nik_fkey;
 
   -- Bank Soal Table
   CREATE TABLE soal (
