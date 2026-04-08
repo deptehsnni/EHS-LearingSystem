@@ -44,6 +44,7 @@ export const ParticipantFlow: React.FC = () => {
   const [totalViolations, setTotalViolations] = useState(0);
   const [showPenaltyModal, setShowPenaltyModal] = useState(false);
   const [penaltyCountdown, setPenaltyCountdown] = useState(0);
+  const [penaltyTargetTime, setPenaltyTargetTime] = useState<number>(0);
   const [sessionInactive, setSessionInactive] = useState(false);
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [kickedByOtherDevice, setKickedByOtherDevice] = useState(false);
@@ -60,20 +61,17 @@ export const ParticipantFlow: React.FC = () => {
     setTotalViolations(prev => {
       const next = prev + 1;
       setViolationType(type);
-      // Penalti ke-4: 2 menit
-      if (next === 4) {
-        setPenaltyCountdown(120);
-        setShowPenaltyModal(true);
-      // Penalti ke-5: 4 menit
-      } else if (next === 5) {
-        setPenaltyCountdown(240);
-        setShowPenaltyModal(true);
-      // Penalti ke-6+: 10 menit
-      } else if (next >= 6) {
-        setPenaltyCountdown(600);
+      
+      let sec = 0;
+      if (next === 4) sec = 120;
+      else if (next === 5) sec = 240;
+      else if (next >= 6) sec = 600;
+        
+      if (sec > 0) {
+        setPenaltyTargetTime(Date.now() + (sec * 1000));
+        setPenaltyCountdown(sec);
         setShowPenaltyModal(true);
       } else {
-        // Sebelum ke-4: hanya tampilkan warning biasa
         setShowViolationWarning(true);
       }
       return next;
@@ -112,6 +110,44 @@ export const ParticipantFlow: React.FC = () => {
         .then(({ data }) => {
           if (data) {
             setCurrentJenis(data);
+            
+            // Hydrate state from localStorage
+            const savedKey = `ehs_exam_state_${p.nik || 'umum'}`;
+            const savedState = localStorage.getItem(savedKey);
+            
+            if (savedState) {
+              try {
+                const parsed = JSON.parse(savedState);
+                if (parsed.activeExamId === examId || !parsed.activeExamId) {
+                  setQuestions(parsed.questions || []);
+                  setAnswers(parsed.answers || {});
+                  setTimeLeft(parsed.timeLeft !== undefined ? parsed.timeLeft : Math.abs(data.timer_minutes) * 60);
+                  setCurrentQuestionIndex(parsed.currentQuestionIndex || 0);
+                  setTabViolations(parsed.tabViolations || 0);
+                  setScreenshotViolations(parsed.screenshotViolations || 0);
+                  setCopyViolations(parsed.copyViolations || 0);
+                  setTotalViolations(parsed.totalViolations || 0);
+                  setExamStarted(parsed.examStarted || false);
+                  if (parsed.step) setStep(parsed.step);
+                  if (parsed.activeExamId) setActiveExamId(parsed.activeExamId);
+                  
+                  if (parsed.penaltyTargetTime && parsed.penaltyTargetTime > Date.now()) {
+                    const rem = Math.ceil((parsed.penaltyTargetTime - Date.now()) / 1000);
+                    setPenaltyCountdown(rem);
+                    setPenaltyTargetTime(parsed.penaltyTargetTime);
+                    setShowPenaltyModal(true);
+                  } else {
+                    setPenaltyTargetTime(0);
+                    setPenaltyCountdown(0);
+                    setShowPenaltyModal(false);
+                  }
+                  return; // State loaded successfully
+                }
+              } catch (err) {
+                console.error("Failed to parse saved progress state", err);
+              }
+            }
+            
             setTimeLeft(Math.abs(data.timer_minutes) * 60);
           }
         });
@@ -136,6 +172,27 @@ export const ParticipantFlow: React.FC = () => {
       return () => clearInterval(t);
     }
   }, [penaltyCountdown]);
+
+  // Sync progress to LocalStorage
+  useEffect(() => {
+    if (examStarted && participant) {
+      const stateToSave = {
+        activeExamId,
+        examStarted,
+        step,
+        questions,
+        answers,
+        timeLeft,
+        currentQuestionIndex,
+        tabViolations,
+        screenshotViolations,
+        copyViolations,
+        totalViolations,
+        penaltyTargetTime
+      };
+      localStorage.setItem(`ehs_exam_state_${participant.nik || 'umum'}`, JSON.stringify(stateToSave));
+    }
+  }, [examStarted, step, questions, answers, timeLeft, currentQuestionIndex, tabViolations, screenshotViolations, copyViolations, totalViolations, penaltyTargetTime, participant, activeExamId]);
 
   // Cek sesi ujian masih aktif setiap 30 detik
   useEffect(() => {
@@ -274,6 +331,7 @@ export const ParticipantFlow: React.FC = () => {
     if (token && participant?.nik) {
       supabase.from('peserta_sessions').delete().eq('nik', participant.nik).then(() => {});
     }
+    localStorage.removeItem(`ehs_exam_state_${participant?.nik || 'umum'}`);
     localStorage.removeItem('ehs_participant');
     localStorage.removeItem('ehs_session_token');
     localStorage.removeItem('preferred_exam');
@@ -437,12 +495,14 @@ export const ParticipantFlow: React.FC = () => {
       } catch (_) { /* increment_stat opsional, abaikan jika gagal */ }
 
       setExamResult(result);
+      localStorage.removeItem(`ehs_exam_state_${participant?.nik || 'umum'}`);
       localStorage.removeItem('preferred_exam');
       setStep(4);
       scrollToTop();
     } catch (err) {
       console.error(err);
       setExamResult(result);
+      localStorage.removeItem(`ehs_exam_state_${participant?.nik || 'umum'}`);
       setStep(4);
       scrollToTop();
     } finally {
@@ -474,10 +534,14 @@ export const ParticipantFlow: React.FC = () => {
         return;
       }
 
+      const isUmumReq = (participant as any).tipe_ujian === 'umum';
+      const reqNama = isUmumReq ? umumFormData.nama : participant.nama;
+      const reqPerusahaan = isUmumReq ? (umumFormData.departemen || '-') : participant.perusahaan;
+
       const { error } = await supabase.from('remedial_requests').insert([{
         nik: participant.nik,
-        nama: participant.nama,
-        perusahaan: participant.perusahaan,
+        nama: reqNama,
+        perusahaan: reqPerusahaan,
         jenis_ujian_id: examId,
         status: 'pending'
       }]);
@@ -1101,7 +1165,7 @@ export const ParticipantFlow: React.FC = () => {
                 <div className="w-full h-px bg-[#E6E1E5]" />
                 <button
                   onClick={submitExam}
-                  disabled={loading || Object.keys(answers).length < questions.length}
+                  disabled={loading}
                   className="w-full max-w-md py-4 sm:py-6 rounded-[20px] sm:rounded-[24px] bg-[#6750A4] text-white font-bold text-lg sm:text-2xl shadow-xl hover:bg-[#4F378B] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                 >
                   {loading ? 'Mengirim Jawaban...' : 'Selesai & Kirim Jawaban'}
@@ -1137,6 +1201,31 @@ export const ParticipantFlow: React.FC = () => {
                 Hasil ujian induksi keselamatan kerja Anda telah dicatat.
               </p>
 
+              <div className="bg-[#F3F0F5] p-5 rounded-3xl mb-6 text-left" id="hasil-ujian-evidence">
+                <div className="flex justify-between items-center border-b border-[#E6E1E5] pb-3 mb-3">
+                  <span className="text-sm font-medium text-[#49454F]">Waktu Selesai</span>
+                  <span className="font-bold text-[#1C1B1F]">{new Date(examResult.waktu_selesai).toLocaleString('id-ID')}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="block text-xs text-[#49454F] mb-1">NIK / ID</span>
+                    <span className="font-bold text-[#1C1B1F]">{examResult.nik || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs text-[#49454F] mb-1">Nama</span>
+                    <span className="font-bold text-[#1C1B1F]">{examResult.nama}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block text-xs text-[#49454F] mb-1">Departemen / Perusahaan</span>
+                    <span className="font-bold text-[#1C1B1F]">{examResult.perusahaan}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block text-xs text-[#49454F] mb-1">Jenis Ujian</span>
+                    <span className="font-bold text-[#1C1B1F]">{currentJenis?.nama || 'Ujian Induksi'}</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-[#F3F0F5] p-6 rounded-3xl">
                   <span className="block text-sm text-[#49454F] mb-1">Skor Akhir</span>
@@ -1171,7 +1260,7 @@ export const ParticipantFlow: React.FC = () => {
                 </div>
               </div>
 
-              {!examResult.status_lulus && !isUmum && (
+              {!examResult.status_lulus && (
                 <div className="bg-[#FFF8E1] p-6 rounded-2xl border border-[#FFE082] mb-8 text-left">
                   <h4 className="font-bold text-[#F57F17] flex items-center gap-2 mb-2">
                     <AlertTriangle size={18} /> Remedial
@@ -1189,12 +1278,88 @@ export const ParticipantFlow: React.FC = () => {
                 </div>
               )}
 
-              <button 
-                onClick={handleLogout}
-                className="w-full py-4 rounded-2xl bg-[#1C1B1F] text-white font-bold text-lg shadow-lg"
-              >
-                Selesai & Keluar
-              </button>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => {
+                    const printContent = document.getElementById('hasil-ujian-evidence')?.innerHTML || '';
+                    const win = window.open('', '_blank');
+                    if (win) {
+                      win.document.write(`
+                        <html>
+                          <head>
+                            <title>Bukti Hasil Ujian EHS</title>
+                            <style>
+                              body { font-family: sans-serif; padding: 40px; color: #1C1B1F; max-width: 600px; margin: 0 auto; }
+                              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #E6A620; padding-bottom: 20px; }
+                              .header h2 { margin: 0; color: #1C1B1F; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
+                              .header p { color: #6B7280; font-size: 14px; margin-top: 8px; }
+                              .detail-row { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+                              .detail-label { color: #6B7280; font-size: 14px; }
+                              .detail-value { font-weight: bold; color: #1C1B1F; font-size: 16px; }
+                              .result-box { margin-top: 40px; padding: 30px; border-radius: 12px; text-align: center; }
+                              .result-status { font-size: 28px; font-weight: 900; margin-bottom: 10px; }
+                              .result-score { font-size: 48px; font-weight: 900; }
+                              .status-pass { background-color: #E8F5E9; color: #2E7D32; border: 2px solid #C8E6C9; }
+                              .status-fail { background-color: #F9DEDC; color: #B3261E; border: 2px solid #F2B8B5; }
+                              .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #9CA3AF; border-top: 1px dashed #ccc; padding-top: 20px; }
+                              @media print {
+                                body { padding: 0; }
+                                .result-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                              }
+                            </style>
+                          </head>
+                          <body>
+                            <div class="header">
+                              <h2>EHS Learning System</h2>
+                              <p>Bukti Kelulusan Ujian Induksi Keselamatan Kerja</p>
+                            </div>
+                            
+                            <div class="detail-row">
+                              <span class="detail-label">Waktu Selesai</span>
+                              <span class="detail-value">${new Date(examResult.waktu_selesai).toLocaleString('id-ID')}</span>
+                            </div>
+                            <div class="detail-row">
+                              <span class="detail-label">NIK / ID</span>
+                              <span class="detail-value">${examResult.nik || '-'}</span>
+                            </div>
+                            <div class="detail-row">
+                              <span class="detail-label">Nama</span>
+                              <span class="detail-value">${examResult.nama}</span>
+                            </div>
+                            <div class="detail-row">
+                              <span class="detail-label">Perusahaan / Dept</span>
+                              <span class="detail-value">${examResult.perusahaan || '-'}</span>
+                            </div>
+
+                            <div class="result-box ${examResult.status_lulus ? 'status-pass' : 'status-fail'}">
+                              <div class="result-status">${examResult.status_lulus ? 'LULUS' : 'TIDAK LULUS'}</div>
+                              <div class="result-score">Skor: ${examResult.nilai}</div>
+                            </div>
+                            
+                            <div class="footer">
+                              Dokumen ini dicetak secara otomatis oleh sistem pencatatan hasil ujian EHS.
+                            </div>
+                            
+                            <script>
+                              window.onload = function() { window.print(); window.close(); }
+                            </script>
+                          </body>
+                        </html>
+                      `);
+                      win.document.close();
+                    }
+                  }}
+                  className="w-full py-4 rounded-2xl bg-[#E6A620] text-[#0F0F0F] font-bold text-lg shadow-lg hover:bg-[#F5B800] transition-all"
+                >
+                  Simpan Hasil (Cetak/PDF)
+                </button>
+                <button 
+                  onClick={handleLogout}
+                  className="w-full py-3 rounded-2xl bg-white border-2 border-[#E6E1E5] text-[#49454F] font-bold text-md hover:bg-[#F3F0F5] transition-all"
+                >
+                  Selesai & Keluar
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
