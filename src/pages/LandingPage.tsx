@@ -162,6 +162,8 @@ export const LandingPage: React.FC = () => {
           }
         }
 
+        let sessionToken = crypto.randomUUID();
+
         // Cek apakah sudah ada sesi aktif di device lain
         // Skip cek ini jika peserta masuk sebagai remedial (data.is_remedial sudah di-set)
         if (!data.is_remedial) {
@@ -172,18 +174,23 @@ export const LandingPage: React.FC = () => {
             .single();
 
           if (existingSession) {
+            const localToken = localStorage.getItem('ehs_session_token');
             const lastActive = new Date(existingSession.last_active).getTime();
             const ageMinutes = (Date.now() - lastActive) / 1000 / 60;
-            if (ageMinutes < 2) {
+            
+            // Allow if local token matches, meaning it's the exact same browser/device
+            if (ageMinutes < 2 && existingSession.token !== localToken) {
               setError('Akun ini sedang digunakan di perangkat lain. Selesaikan sesi tersebut terlebih dahulu.');
               setLoading(false);
               return;
             }
+            if (existingSession.token === localToken) {
+              sessionToken = localToken; // Reuse existing token
+            }
           }
         }
 
-        // Tidak ada sesi aktif → buat token baru dan izinkan masuk
-        const sessionToken = crypto.randomUUID();
+        // Update token & last_active
         const { error: sessionError } = await supabase
           .from('peserta_sessions')
           .upsert([{
