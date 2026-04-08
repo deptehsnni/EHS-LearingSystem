@@ -15,7 +15,7 @@ export interface PesertaMaster {
   kategori: 'Karyawan' | 'Magang' | 'Visitor' | 'Kontraktor';
   allowed_jenis_id?: string;
   is_remedial?: boolean;
-  created_at: string;
+  created_at?: string;
   tipe_ujian?: 'umum'; // Hanya untuk peserta sementara Ujian Umum
 }
 
