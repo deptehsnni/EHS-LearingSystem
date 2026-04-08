@@ -1281,77 +1281,85 @@ export const ParticipantFlow: React.FC = () => {
               <div className="flex flex-col gap-3">
                 <button 
                   onClick={() => {
-                    const printContent = document.getElementById('hasil-ujian-evidence')?.innerHTML || '';
-                    const win = window.open('', '_blank');
-                    if (win) {
-                      win.document.write(`
-                        <html>
-                          <head>
-                            <title>Bukti Hasil Ujian EHS</title>
-                            <style>
-                              body { font-family: sans-serif; padding: 40px; color: #1C1B1F; max-width: 600px; margin: 0 auto; }
-                              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #E6A620; padding-bottom: 20px; }
-                              .header h2 { margin: 0; color: #1C1B1F; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
-                              .header p { color: #6B7280; font-size: 14px; margin-top: 8px; }
-                              .detail-row { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-                              .detail-label { color: #6B7280; font-size: 14px; }
-                              .detail-value { font-weight: bold; color: #1C1B1F; font-size: 16px; }
-                              .result-box { margin-top: 40px; padding: 30px; border-radius: 12px; text-align: center; }
-                              .result-status { font-size: 28px; font-weight: 900; margin-bottom: 10px; }
-                              .result-score { font-size: 48px; font-weight: 900; }
-                              .status-pass { background-color: #E8F5E9; color: #2E7D32; border: 2px solid #C8E6C9; }
-                              .status-fail { background-color: #F9DEDC; color: #B3261E; border: 2px solid #F2B8B5; }
-                              .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #9CA3AF; border-top: 1px dashed #ccc; padding-top: 20px; }
-                              @media print {
-                                body { padding: 0; }
-                                .result-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                              }
-                            </style>
-                          </head>
-                          <body>
-                            <div class="header">
-                              <h2>EHS Learning System</h2>
-                              <p>Bukti Kelulusan Ujian Induksi Keselamatan Kerja</p>
-                            </div>
-                            
-                            <div class="detail-row">
-                              <span class="detail-label">Waktu Selesai</span>
-                              <span class="detail-value">${new Date(examResult.waktu_selesai).toLocaleString('id-ID')}</span>
-                            </div>
-                            <div class="detail-row">
-                              <span class="detail-label">NIK / ID</span>
-                              <span class="detail-value">${examResult.nik || '-'}</span>
-                            </div>
-                            <div class="detail-row">
-                              <span class="detail-label">Nama</span>
-                              <span class="detail-value">${examResult.nama}</span>
-                            </div>
-                            <div class="detail-row">
-                              <span class="detail-label">Perusahaan / Dept</span>
-                              <span class="detail-value">${examResult.perusahaan || '-'}</span>
-                            </div>
+                    setLoading(true);
+                    
+                    const wrapperId = 'ehs-cert-export-wrapper';
+                    let wrapper = document.getElementById(wrapperId);
+                    if (!wrapper) {
+                      wrapper = document.createElement('div');
+                      wrapper.id = wrapperId;
+                      wrapper.style.position = 'absolute';
+                      wrapper.style.left = '-9999px';
+                      wrapper.style.top = '-9999px';
+                      wrapper.style.width = '600px';
+                      wrapper.style.backgroundColor = '#ffffff';
+                      wrapper.style.fontFamily = 'sans-serif';
+                      wrapper.style.padding = '40px';
+                      wrapper.style.color = '#1C1B1F';
+                      document.body.appendChild(wrapper);
+                    }
+                    
+                    wrapper.innerHTML = `
+                      <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #E6A620; padding-bottom: 20px;">
+                        <h2 style="margin: 0; color: #1C1B1F; font-size: 24px; text-transform: uppercase; letter-spacing: 1px;">EHS Learning System</h2>
+                        <p style="color: #6B7280; font-size: 14px; margin-top: 8px;">Bukti Kelulusan Ujian Induksi Keselamatan Kerja</p>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                        <span style="color: #6B7280; font-size: 14px;">Waktu Selesai</span>
+                        <span style="font-weight: bold; color: #1C1B1F; font-size: 16px;">${new Date(examResult.waktu_selesai).toLocaleString('id-ID')}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                        <span style="color: #6B7280; font-size: 14px;">NIK / ID</span>
+                        <span style="font-weight: bold; color: #1C1B1F; font-size: 16px;">${examResult.nik || '-'}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                        <span style="color: #6B7280; font-size: 14px;">Nama</span>
+                        <span style="font-weight: bold; color: #1C1B1F; font-size: 16px;">${examResult.nama}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                        <span style="color: #6B7280; font-size: 14px;">Perusahaan / Dept</span>
+                        <span style="font-weight: bold; color: #1C1B1F; font-size: 16px;">${examResult.perusahaan || '-'}</span>
+                      </div>
+                      <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                        <span style="color: #6B7280; font-size: 14px;">Jenis Ujian</span>
+                        <span style="font-weight: bold; color: #1C1B1F; font-size: 16px;">${currentJenis?.nama || 'Ujian Induksi'}</span>
+                      </div>
+                      <div style="margin-top: 40px; padding: 30px; border-radius: 12px; text-align: center; border: 2px solid ${examResult.status_lulus ? '#C8E6C9' : '#F2B8B5'}; background-color: ${examResult.status_lulus ? '#E8F5E9' : '#F9DEDC'}; color: ${examResult.status_lulus ? '#2E7D32' : '#B3261E'};">
+                        <div style="font-size: 28px; font-weight: 900; margin-bottom: 10px;">${examResult.status_lulus ? 'LULUS' : 'TIDAK LULUS'}</div>
+                        <div style="font-size: 48px; font-weight: 900;">Skor: ${examResult.nilai}</div>
+                      </div>
+                      <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #9CA3AF; border-top: 1px dashed #ccc; padding-top: 20px;">
+                        Dokumen ini dicetak secara otomatis oleh sistem pencatatan hasil ujian EHS.
+                      </div>
+                    `;
 
-                            <div class="result-box ${examResult.status_lulus ? 'status-pass' : 'status-fail'}">
-                              <div class="result-status">${examResult.status_lulus ? 'LULUS' : 'TIDAK LULUS'}</div>
-                              <div class="result-score">Skor: ${examResult.nilai}</div>
-                            </div>
-                            
-                            <div class="footer">
-                              Dokumen ini dicetak secara otomatis oleh sistem pencatatan hasil ujian EHS.
-                            </div>
-                            
-                            <script>
-                              window.onload = function() { window.print(); window.close(); }
-                            </script>
-                          </body>
-                        </html>
-                      `);
-                      win.document.close();
+                    const loadAndCapture = () => {
+                      // @ts-ignore
+                      window.html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `Sertifikat_EHS_${examResult.nama.replace(/\s+/g, '_')}.jpg`;
+                        link.href = canvas.toDataURL('image/jpeg', 0.9);
+                        link.click();
+                        setLoading(false);
+                      }).catch((err: any) => {
+                        console.error(err);
+                        setLoading(false);
+                        alert('Gagal mendownload gambar. Silakan coba lagi.');
+                      });
+                    };
+
+                    if (!(window as any).html2canvas) {
+                      const script = document.createElement('script');
+                      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                      script.onload = loadAndCapture;
+                      document.body.appendChild(script);
+                    } else {
+                      loadAndCapture();
                     }
                   }}
                   className="w-full py-4 rounded-2xl bg-[#E6A620] text-[#0F0F0F] font-bold text-lg shadow-lg hover:bg-[#F5B800] transition-all"
                 >
-                  Simpan Hasil (Cetak/PDF)
+                  {loading ? 'Menyiapkan Gambar...' : 'Simpan Hasil (.JPG)'}
                 </button>
                 <button 
                   onClick={handleLogout}
