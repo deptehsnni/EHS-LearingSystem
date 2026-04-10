@@ -1059,9 +1059,12 @@ export const AdminDashboard: React.FC = () => {
       trendUjian = Math.round(((thisMonthCount - lastMonthCount) / lastMonthCount) * 100);
     }
 
+    const uniqueTrainingDates = new Set(filteredResults.map(r => new Date(r.waktu_selesai).toISOString().split('T')[0]));
+    const totalTrainingCount = uniqueTrainingDates.size;
+
     return {
       totalAttempts, totalLulus, totalGagal, lulusRate, avgNilai,
-      uniquePeserta, thisMonthCount,
+      uniquePeserta, thisMonthCount, totalTrainingCount,
       trendUjian, totalUjianSistem: jenisUjian.length
     };
   }, [results, jenisUjian, dashboardFilterJenis]);
@@ -1072,13 +1075,16 @@ export const AdminDashboard: React.FC = () => {
       ? results
       : results.filter(r => r.jenis_ujian_id === dashboardFilterJenis);
 
-    const kategoris: Record<string, number> = { Karyawan: 0, Magang: 0, Visitor: 0, Kontraktor: 0 };
+    const kategoris: Record<string, number> = {};
     filteredResults.forEach(r => {
       // Coba ambil dari peserta_master dulu, fallback ke profil_data
       const p = peserta.find(p => p.nik === r.nik);
       const kat = p?.kategori || (r.profil_data as any)?.kategori;
-      if (kat && kategoris[kat] !== undefined) kategoris[kat]++;
-      else kategoris['Karyawan']++; // default
+      let normalizedKat = 'Karyawan'; // fallback
+      if (typeof kat === 'string' && kat.trim()) {
+         normalizedKat = kat.trim().charAt(0).toUpperCase() + kat.trim().slice(1).toLowerCase();
+      }
+      kategoris[normalizedKat] = (kategoris[normalizedKat] || 0) + 1;
     });
     return Object.entries(kategoris)
       .map(([name, value]) => ({ name, value }))
@@ -1463,18 +1469,18 @@ export const AdminDashboard: React.FC = () => {
             {/* Metric Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Total Ujian */}
-              <div className="relative overflow-hidden rounded-[24px] p-5 flex flex-col justify-between min-h-[140px]" style={{background:'linear-gradient(135deg,#6750A4 0%,#4F378B 100%)'}}>
+              <motion.div whileHover={{ y: -5 }} className="relative overflow-hidden rounded-[24px] p-5 flex flex-col justify-between min-h-[140px]" style={{background:'linear-gradient(135deg,#6750A4 0%,#4F378B 100%)'}}>
                 <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full opacity-15 bg-white"/>
                 <div className="p-2 rounded-xl bg-white/20 w-fit"><Users size={16} className="text-white"/></div>
                 <div>
-                  <h3 className="text-3xl font-black text-white">{stats.totalAttempts}</h3>
+                  <h3 className="text-3xl font-black text-white">{stats.uniquePeserta}</h3>
                   <p className="text-xs font-bold text-white/80 mt-0.5">Total Peserta Ujian</p>
-                  <p className="text-[10px] text-white/50 mt-0.5">{stats.uniquePeserta} peserta unik</p>
+                  <p className="text-[10px] text-white/50 mt-0.5">{stats.totalAttempts} ujian secara keseluruhan</p>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Tingkat Lulus */}
-              <div className="relative overflow-hidden rounded-[24px] p-5 flex flex-col justify-between min-h-[140px]" style={{background:'linear-gradient(135deg,#1B5E20 0%,#2E7D32 100%)'}}>
+              <motion.div whileHover={{ y: -5 }} className="relative overflow-hidden rounded-[24px] p-5 flex flex-col justify-between min-h-[140px]" style={{background:'linear-gradient(135deg,#1B5E20 0%,#2E7D32 100%)'}}>
                 <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full opacity-15 bg-white"/>
                 <div className="p-2 rounded-xl bg-white/20 w-fit"><CheckCircle2 size={16} className="text-white"/></div>
                 <div>
@@ -1487,10 +1493,10 @@ export const AdminDashboard: React.FC = () => {
                     <div className="h-1 rounded-full bg-white transition-all" style={{width:`${stats.lulusRate}%`}}/>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Rata-rata Nilai */}
-              <div className="rounded-[24px] p-5 flex flex-col justify-between bg-white border border-[#E6E1E5] shadow-sm min-h-[140px]">
+              <motion.div whileHover={{ y: -5 }} className="rounded-[24px] p-5 flex flex-col justify-between bg-white border border-[#E6E1E5] shadow-sm min-h-[140px]">
                 <div className="flex items-start justify-between">
                   <div className="p-2 rounded-xl bg-[#EADDFF]"><BarChart3 size={16} className="text-[#6750A4]"/></div>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stats.avgNilai>=70?'bg-[#E8F5E9] text-[#2E7D32]':'bg-[#FFF8E1] text-[#F57F17]'}`}>
@@ -1502,22 +1508,22 @@ export const AdminDashboard: React.FC = () => {
                   <p className="text-xs font-bold text-[#49454F] mt-0.5">Rata-rata Nilai</p>
                   <p className="text-[10px] text-[#9CA3AF] mt-0.5">KKM = 75</p>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Bulan ini */}
-              <div className="rounded-[24px] p-5 flex flex-col justify-between bg-white border border-[#E6E1E5] shadow-sm min-h-[140px]">
+              {/* Jumlah Training */}
+              <motion.div whileHover={{ y: -5 }} className="rounded-[24px] p-5 flex flex-col justify-between bg-white border border-[#E6E1E5] shadow-sm min-h-[140px]">
                 <div className="flex items-start justify-between">
                   <div className="p-2 rounded-xl bg-[#FFF8E1]"><Clock size={16} className="text-[#F57F17]"/></div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stats.trendUjian>0?'bg-[#E8F5E9] text-[#2E7D32]':stats.trendUjian<0?'bg-[#F9DEDC] text-[#B3261E]':'bg-[#F3F0F5] text-[#49454F]'}`}>
-                    {stats.trendUjian>0?`↑ +${stats.trendUjian}%`:stats.trendUjian<0?`↓ ${stats.trendUjian}%`:'→ Stabil'}
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E8F5E9] text-[#2E7D32]">
+                    Aktif
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-3xl font-black text-[#1C1B1F]">{stats.thisMonthCount}</h3>
-                  <p className="text-xs font-bold text-[#49454F] mt-0.5">Ujian Bulan Ini</p>
-                  <p className="text-[10px] text-[#9CA3AF] mt-0.5">vs bulan lalu</p>
+                  <h3 className="text-3xl font-black text-[#1C1B1F]">{stats.totalTrainingCount}</h3>
+                  <p className="text-xs font-bold text-[#49454F] mt-0.5">Jumlah Pelaksanaan Training</p>
+                  <p className="text-[10px] text-[#9CA3AF] mt-0.5">Berdasarkan tanggal ujian</p>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Row: Lulus Donut + Kategori Pie + Recent */}
@@ -1535,7 +1541,7 @@ export const AdminDashboard: React.FC = () => {
                       <Pie data={lulusDonutData} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3} dataKey="value">
                         {lulusDonutData.map((_, i) => <Cell key={i} fill={LULUS_COLORS[i % LULUS_COLORS.length]}/>)}
                       </Pie>
-                      <Tooltip formatter={(v)=>[`${v} peserta`,'Jumlah']} contentStyle={{borderRadius:'10px',border:'none',boxShadow:'0 4px 20px rgba(0,0,0,0.1)'}}/>
+                      <Tooltip formatter={(value, name) => [`${value} peserta (${stats.totalAttempts > 0 ? Math.round((Number(value) / stats.totalAttempts) * 100) : 0}%)`, 'Jumlah']} contentStyle={{borderRadius:'10px',border:'none',boxShadow:'0 4px 20px rgba(0,0,0,0.1)'}}/>
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -1544,7 +1550,7 @@ export const AdminDashboard: React.FC = () => {
                     <div key={d.name} className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{backgroundColor:LULUS_COLORS[i]}}/>
                       <span className="text-[10px] text-[#49454F]">
-                        {d.name} <span className="font-bold">({d.value} - {stats.totalAttempts > 0 ? Math.round((d.value / stats.totalAttempts) * 100) : 0}%)</span>
+                        {d.name} <span className="font-bold">({d.value})</span>
                       </span>
                     </div>
                   ))}
@@ -1565,7 +1571,7 @@ export const AdminDashboard: React.FC = () => {
                         <Pie data={pieData} cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3} dataKey="value">
                           {pieData.map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
                         </Pie>
-                        <Tooltip formatter={(v)=>[`${v} peserta`,'Jumlah']} contentStyle={{borderRadius:'10px',border:'none',boxShadow:'0 4px 20px rgba(0,0,0,0.1)'}}/>
+                        <Tooltip formatter={(value, name) => [`${value} peserta (${stats.totalAttempts > 0 ? Math.round((Number(value) / stats.totalAttempts) * 100) : 0}%)`, 'Jumlah']} contentStyle={{borderRadius:'10px',border:'none',boxShadow:'0 4px 20px rgba(0,0,0,0.1)'}}/>
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -1574,7 +1580,7 @@ export const AdminDashboard: React.FC = () => {
                       <div key={d.name} className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{backgroundColor:COLORS[i]}}/>
                         <span className="text-[10px] text-[#49454F] truncate">
-                          {d.name} ({d.value} - {stats.totalAttempts > 0 ? Math.round((d.value / stats.totalAttempts) * 100) : 0}%)
+                          {d.name} <span className="font-bold">({d.value})</span>
                         </span>
                       </div>
                     ))}
