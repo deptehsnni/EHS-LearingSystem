@@ -1049,16 +1049,20 @@ export const AdminDashboard: React.FC = () => {
       const lm = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       return d.getMonth() === lm.getMonth() && d.getFullYear() === lm.getFullYear();
     });
-    const thisMonthLulusRate = thisMonth.length > 0
-      ? Math.round((thisMonth.filter(r => r.status_lulus).length / thisMonth.length) * 100) : 0;
-    const lastMonthLulusRate = lastMonth.length > 0
-      ? Math.round((lastMonth.filter(r => r.status_lulus).length / lastMonth.length) * 100) : 0;
-    const trendLulus = thisMonthLulusRate - lastMonthLulusRate;
+    const thisMonthCount = thisMonth.length;
+    const lastMonthCount = lastMonth.length;
+    let trendUjian = 0;
+    if (lastMonthCount === 0) {
+      if (thisMonthCount > 0) trendUjian = 100;
+      else trendUjian = 0;
+    } else {
+      trendUjian = Math.round(((thisMonthCount - lastMonthCount) / lastMonthCount) * 100);
+    }
 
     return {
       totalAttempts, totalLulus, totalGagal, lulusRate, avgNilai,
-      uniquePeserta, thisMonthCount: thisMonth.length,
-      trendLulus, totalUjianSistem: jenisUjian.length
+      uniquePeserta, thisMonthCount,
+      trendUjian, totalUjianSistem: jenisUjian.length
     };
   }, [results, jenisUjian, dashboardFilterJenis]);
 
@@ -1464,7 +1468,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="p-2 rounded-xl bg-white/20 w-fit"><Users size={16} className="text-white"/></div>
                 <div>
                   <h3 className="text-3xl font-black text-white">{stats.totalAttempts}</h3>
-                  <p className="text-xs font-bold text-white/80 mt-0.5">Total Ujian Selesai</p>
+                  <p className="text-xs font-bold text-white/80 mt-0.5">Total Peserta Ujian</p>
                   <p className="text-[10px] text-white/50 mt-0.5">{stats.uniquePeserta} peserta unik</p>
                 </div>
               </div>
@@ -1504,8 +1508,8 @@ export const AdminDashboard: React.FC = () => {
               <div className="rounded-[24px] p-5 flex flex-col justify-between bg-white border border-[#E6E1E5] shadow-sm min-h-[140px]">
                 <div className="flex items-start justify-between">
                   <div className="p-2 rounded-xl bg-[#FFF8E1]"><Clock size={16} className="text-[#F57F17]"/></div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stats.trendLulus>0?'bg-[#E8F5E9] text-[#2E7D32]':stats.trendLulus<0?'bg-[#F9DEDC] text-[#B3261E]':'bg-[#F3F0F5] text-[#49454F]'}`}>
-                    {stats.trendLulus>0?`↑ +${stats.trendLulus}%`:stats.trendLulus<0?`↓ ${stats.trendLulus}%`:'→ Stabil'}
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${stats.trendUjian>0?'bg-[#E8F5E9] text-[#2E7D32]':stats.trendUjian<0?'bg-[#F9DEDC] text-[#B3261E]':'bg-[#F3F0F5] text-[#49454F]'}`}>
+                    {stats.trendUjian>0?`↑ +${stats.trendUjian}%`:stats.trendUjian<0?`↓ ${stats.trendUjian}%`:'→ Stabil'}
                   </span>
                 </div>
                 <div>
@@ -1539,7 +1543,9 @@ export const AdminDashboard: React.FC = () => {
                   {lulusDonutData.map((d,i)=>(
                     <div key={d.name} className="flex items-center gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{backgroundColor:LULUS_COLORS[i]}}/>
-                      <span className="text-[10px] text-[#49454F]">{d.name} <span className="font-bold">({d.value})</span></span>
+                      <span className="text-[10px] text-[#49454F]">
+                        {d.name} <span className="font-bold">({d.value} - {stats.totalAttempts > 0 ? Math.round((d.value / stats.totalAttempts) * 100) : 0}%)</span>
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -1567,7 +1573,9 @@ export const AdminDashboard: React.FC = () => {
                     {pieData.map((d,i)=>(
                       <div key={d.name} className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{backgroundColor:COLORS[i]}}/>
-                        <span className="text-[10px] text-[#49454F] truncate">{d.name} ({d.value})</span>
+                        <span className="text-[10px] text-[#49454F] truncate">
+                          {d.name} ({d.value} - {stats.totalAttempts > 0 ? Math.round((d.value / stats.totalAttempts) * 100) : 0}%)
+                        </span>
                       </div>
                     ))}
                   </div>
