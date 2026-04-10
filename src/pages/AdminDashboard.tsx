@@ -1077,13 +1077,11 @@ export const AdminDashboard: React.FC = () => {
 
     const kategoris: Record<string, number> = {};
     filteredResults.forEach(r => {
-      // Coba ambil dari peserta_master dulu, fallback ke profil_data
+      // Priority 1: Perusahaan dari tabel hasil ujian, Priority 2: dari master peserta
       const p = peserta.find(p => p.nik === r.nik);
-      const kat = p?.kategori || (r.profil_data as any)?.kategori;
-      let normalizedKat = 'Karyawan'; // fallback
-      if (typeof kat === 'string' && kat.trim()) {
-         normalizedKat = kat.trim().charAt(0).toUpperCase() + kat.trim().slice(1).toLowerCase();
-      }
+      const perusahaanStr = r.perusahaan || p?.perusahaan || '';
+      const isKaryawan = /pt\.?\s*nni/i.test(String(perusahaanStr)) || String(perusahaanStr).trim().toUpperCase() === 'NNI';
+      const normalizedKat = isKaryawan ? 'Karyawan' : 'Kontraktor';
       kategoris[normalizedKat] = (kategoris[normalizedKat] || 0) + 1;
     });
     return Object.entries(kategoris)
@@ -1473,9 +1471,9 @@ export const AdminDashboard: React.FC = () => {
                 <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full opacity-15 bg-white"/>
                 <div className="p-2 rounded-xl bg-white/20 w-fit"><Users size={16} className="text-white"/></div>
                 <div>
-                  <h3 className="text-3xl font-black text-white">{stats.uniquePeserta}</h3>
+                  <h3 className="text-3xl font-black text-white">{stats.totalAttempts}</h3>
                   <p className="text-xs font-bold text-white/80 mt-0.5">Total Peserta Ujian</p>
-                  <p className="text-[10px] text-white/50 mt-0.5">{stats.totalAttempts} ujian secara keseluruhan</p>
+                  <p className="text-[10px] text-white/50 mt-0.5">{stats.uniquePeserta} peserta unik</p>
                 </div>
               </motion.div>
 
