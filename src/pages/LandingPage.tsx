@@ -201,6 +201,7 @@ export const LandingPage: React.FC = () => {
 
         if (sessionError) console.error('Gagal simpan session token:', sessionError.message);
 
+        localStorage.removeItem(`ehs_exam_state_${data.nik || 'umum'}`);
         localStorage.setItem('ehs_participant', JSON.stringify(data));
         localStorage.setItem('ehs_session_token', sessionToken);
         navigate('/induction');
