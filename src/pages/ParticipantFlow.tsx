@@ -130,6 +130,23 @@ export const ParticipantFlow: React.FC = () => {
                   setExamStarted(parsed.examStarted || false);
                   if (parsed.step) setStep(parsed.step);
                   if (parsed.activeExamId) setActiveExamId(parsed.activeExamId);
+
+                  // Jika dipulihkan di Step 4 tapi data hasil kosong, ambil dari DB
+                  if (parsed.step === 4 && !examResult) {
+                    setLoading(true);
+                    supabase
+                      .from('hasil_ujian')
+                      .select('*')
+                      .eq('nik', p.nik)
+                      .order('waktu_selesai', { ascending: false })
+                      .limit(1)
+                      .single()
+                      .then(({ data: lastResult }) => {
+                        if (lastResult) setExamResult(lastResult);
+                      })
+                      .catch(err => console.error("Error restoring result:", err))
+                      .finally(() => setLoading(false));
+                  }
                   
                   if (parsed.penaltyTargetTime && parsed.penaltyTargetTime > Date.now()) {
                     const rem = Math.ceil((parsed.penaltyTargetTime - Date.now()) / 1000);
@@ -156,11 +173,11 @@ export const ParticipantFlow: React.FC = () => {
 
   // Timer effect
   useEffect(() => {
-    if (examStarted && timeLeft > 0 && !examResult) {
+    if (examStarted && timeLeft > 0 && !examResult && !showPenaltyModal) {
       const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
       return () => clearInterval(timer);
     }
-  }, [examStarted, timeLeft, examResult]);
+  }, [examStarted, timeLeft, examResult, showPenaltyModal]);
 
   // Penalty countdown effect
   useEffect(() => {
@@ -495,6 +512,7 @@ export const ParticipantFlow: React.FC = () => {
       } catch (_) { /* increment_stat opsional, abaikan jika gagal */ }
 
       setExamResult(result);
+      setExamStarted(false); // Matikan agar tidak memicu sync localStorage lagi
       localStorage.removeItem(`ehs_exam_state_${participant?.nik || 'umum'}`);
       localStorage.removeItem('preferred_exam');
       setStep(4);
@@ -502,6 +520,7 @@ export const ParticipantFlow: React.FC = () => {
     } catch (err) {
       console.error(err);
       setExamResult(result);
+      setExamStarted(false);
       localStorage.removeItem(`ehs_exam_state_${participant?.nik || 'umum'}`);
       setStep(4);
       scrollToTop();
@@ -1106,7 +1125,7 @@ export const ParticipantFlow: React.FC = () => {
                   <div className="flex-1 h-2 bg-[#E6E1E5] rounded-full overflow-hidden">
                     <div
                       className="h-full bg-[#6750A4] transition-all duration-300"
-                      style={{ width: `${(Object.keys(answers).length / questions.length) * 100}%` }}
+                      style={{ width: `${(Object.keys(answers).length / (questions.length || 1)) * 100}%` }}
                     />
                   </div>
                   <span className="text-[#49454F] text-xs font-medium whitespace-nowrap">
