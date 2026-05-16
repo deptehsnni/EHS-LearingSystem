@@ -235,11 +235,18 @@ export const ParticipantFlow: React.FC = () => {
 
         // Update last_active agar device lain tidak bisa login
         if (localToken && participant?.nik) {
-          await supabase
+          const { data } = await supabase
             .from('peserta_sessions')
             .update({ last_active: new Date().toISOString() })
             .eq('nik', participant.nik)
-            .eq('token', localToken);
+            .eq('token', localToken)
+            .select();
+            
+          // Jika tidak ada data yang diupdate, berarti sesi sudah dihapus (Force Kicked) atau tertimpa
+          if (!data || data.length === 0) {
+            setKickedByOtherDevice(true);
+            return;
+          }
         }
       } catch (err) {
         // Abaikan error network sementara, jangan crash polling
@@ -713,9 +720,9 @@ export const ParticipantFlow: React.FC = () => {
                 </div>
                 <h3 className="text-2xl font-black text-[#B3261E] mb-3">Sesi Diakhiri</h3>
                 <p className="text-[#49454F] mb-6">
-                  Akun Anda telah login di perangkat lain. Untuk keamanan, sesi ini telah diakhiri secara otomatis.
+                  Sesi ujian Anda telah diakhiri. Hal ini dapat terjadi karena Anda <b>login dari perangkat lain</b>, atau <b>Admin telah mengeluarkan Anda</b> dari ujian secara manual.
                   <br /><br />
-                  Jika bukan Anda yang melakukan ini, segera hubungi Admin.
+                  Silakan hubungi Admin jika Anda merasa ini adalah sebuah kesalahan.
                 </p>
                 <button
                   onClick={() => navigate('/')}
