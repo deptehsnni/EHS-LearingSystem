@@ -83,18 +83,20 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ peserta, jenisUjian })
     return 'offline';
   };
 
-  const enrichedSessions = sessions.map(s => {
-    const p = peserta.find(p => p.nik === s.nik);
-    const j = jenisUjian.find(j => j.id === (s.jenis_ujian_id || p?.allowed_jenis_id));
-    return {
-      ...s,
-      nama: p?.nama || 'Unknown',
-      perusahaan: p?.perusahaan || '-',
-      kategori: p?.kategori || '-',
-      jenis_nama: j?.nama || 'Unknown Exam',
-      status: getStatus(s.last_active)
-    };
-  });
+  const enrichedSessions = sessions
+    .filter(s => peserta.some(p => p.nik === s.nik)) // Hanya proses sesi yang nik-nya ada di master
+    .map(s => {
+      const p = peserta.find(p => p.nik === s.nik);
+      const j = jenisUjian.find(j => j.id === (s.jenis_ujian_id || p?.allowed_jenis_id));
+      return {
+        ...s,
+        nama: p?.nama || 'Unknown',
+        perusahaan: p?.perusahaan || '-',
+        kategori: p?.kategori || '-',
+        jenis_nama: j?.nama || 'Unknown Exam',
+        status: getStatus(s.last_active)
+      };
+    });
 
   const filteredSessions = enrichedSessions.filter(s => 
     s.nama.toLowerCase().includes(searchTerm.toLowerCase()) || 
