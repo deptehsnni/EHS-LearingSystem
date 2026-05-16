@@ -7,7 +7,7 @@ import {
   Trash2 
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../lib/supabase';
 import { JenisUjian } from '../../types';
 
 interface JenisUjianTableProps {
