@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../lib/supabase';
 import { AdminUser } from '../../types';
 import { LandingConfigEditor } from './LandingConfigEditor';
 
