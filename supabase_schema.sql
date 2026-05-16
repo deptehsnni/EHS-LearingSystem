@@ -79,6 +79,14 @@
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
   );
 
+  -- Peserta Sessions Table (Live Monitor)
+  CREATE TABLE peserta_sessions (
+    nik TEXT PRIMARY KEY,
+    token TEXT NOT NULL,
+    last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    jenis_ujian_id UUID REFERENCES jenis_ujian(id)
+  );
+
   -- Persistent Stats Table (Lifetime Counters)
   CREATE TABLE persistent_stats (
     id TEXT PRIMARY KEY,
@@ -93,3 +101,51 @@
     ('total_lulus', 0),
     ('total_gagal', 0)
   ON CONFLICT (id) DO NOTHING;
+
+/*
+=============================================================================
+  SAFE MIGRATION SCRIPT (JALANKAN INI JIKA DATABASE SUDAH ADA / UPDATE)
+=============================================================================
+  Script di bawah ini dirancang khusus untuk memperbarui database lama Anda 
+  tanpa menghapus data yang sudah ada. Cukup salin blok di bawah ini dan 
+  jalankan di Supabase SQL Editor Anda.
+*/
+
+-- 1. Tambahkan kolom tipe_ujian di jenis_ujian (jika belum ada)
+ALTER TABLE jenis_ujian ADD COLUMN IF NOT EXISTS tipe_ujian TEXT CHECK (tipe_ujian IN ('khusus', 'umum')) DEFAULT 'khusus';
+
+-- 2. Hapus Constraint untuk Ujian Umum
+ALTER TABLE hasil_ujian DROP CONSTRAINT IF EXISTS hasil_ujian_nik_fkey;
+
+-- 3. Ganti nama tabel request_retry_log menjadi remedial_requests (Tanpa Menghapus Data)
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'request_retry_log') THEN
+        ALTER TABLE request_retry_log RENAME TO remedial_requests;
+    END IF;
+END $$;
+
+-- 4. Hapus constraint nik di remedial_requests (dulu request_retry_log)
+ALTER TABLE remedial_requests DROP CONSTRAINT IF EXISTS request_retry_log_nik_fkey;
+
+-- 5. Tambahkan kolom allowed_jenis_id pada peserta_master (Tanpa Menghapus Data)
+ALTER TABLE peserta_master ADD COLUMN IF NOT EXISTS allowed_jenis_id UUID REFERENCES jenis_ujian(id);
+
+-- 6. Buat RPC Function untuk increment_stat (Update Statistik Secara Otomatis)
+CREATE OR REPLACE FUNCTION increment_stat(stat_id text)
+RETURNS void AS $$
+BEGIN
+  INSERT INTO persistent_stats (id, count, updated_at)
+  VALUES (stat_id, 1, NOW())
+  ON CONFLICT (id) DO UPDATE 
+  SET count = persistent_stats.count + 1, updated_at = NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- 7. Buat tabel peserta_sessions untuk Live Monitor (Tanpa Menghapus Data)
+CREATE TABLE IF NOT EXISTS peserta_sessions (
+  nik TEXT PRIMARY KEY,
+  token TEXT NOT NULL,
+  last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  jenis_ujian_id UUID REFERENCES jenis_ujian(id)
+);
