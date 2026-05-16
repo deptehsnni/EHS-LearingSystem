@@ -1183,8 +1183,12 @@ export const ParticipantFlow: React.FC = () => {
               <div className="pt-6 pb-10 sm:pt-12 sm:pb-20 flex flex-col items-center gap-4">
                 <div className="w-full h-px bg-[#E6E1E5]" />
                 <button
-                  onClick={submitExam}
-                  disabled={loading}
+                  onClick={() => {
+                    if (window.confirm('Apakah Anda yakin ingin mengirim jawaban ini? Pastikan semua jawaban sudah benar, Anda tidak dapat mengubahnya setelah ini.')) {
+                      submitExam();
+                    }
+                  }}
+                  disabled={loading || Object.keys(answers).length < questions.length}
                   className="w-full max-w-md py-4 sm:py-6 rounded-[20px] sm:rounded-[24px] bg-[#6750A4] text-white font-bold text-lg sm:text-2xl shadow-xl hover:bg-[#4F378B] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                 >
                   {loading ? 'Mengirim Jawaban...' : 'Selesai & Kirim Jawaban'}
