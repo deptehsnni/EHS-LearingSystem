@@ -49,6 +49,7 @@ export const ParticipantFlow: React.FC = () => {
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [kickedByOtherDevice, setKickedByOtherDevice] = useState(false);
   const [umumFormData, setUmumFormData] = useState({ nama: '', departemen: '' });
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
 
   const navigate = useNavigate();
 
@@ -727,6 +728,54 @@ export const ParticipantFlow: React.FC = () => {
           )}
         </AnimatePresence>
 
+        {/* Submit Confirmation Modal */}
+        <AnimatePresence>
+          {showSubmitConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            >
+              <motion.div
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="bg-[#1A1A1A] border border-[#6750A4]/30 rounded-[32px] p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
+              >
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#6750A4]/10 rounded-full blur-3xl" />
+                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-[#E6A620]/10 rounded-full blur-3xl" />
+                
+                <div className="w-20 h-20 bg-[#6750A4]/20 text-[#D0BCFF] rounded-full flex items-center justify-center mx-auto mb-6 relative z-10">
+                  <ClipboardCheck size={40} />
+                </div>
+                <h3 className="text-2xl font-black text-white text-center mb-3 relative z-10">Kirim Jawaban?</h3>
+                <p className="text-[#9CA3AF] text-center mb-8 relative z-10">
+                  Apakah Anda yakin ingin mengirim semua jawaban ini? <br/>
+                  <span className="text-white font-bold">Anda tidak dapat mengubah jawaban setelah dikirim.</span>
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 relative z-10">
+                  <button
+                    onClick={() => setShowSubmitConfirm(false)}
+                    className="flex-1 py-4 bg-white/5 text-white border border-white/10 rounded-2xl font-bold hover:bg-white/10 transition-all"
+                  >
+                    Periksa Lagi
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSubmitConfirm(false);
+                      submitExam();
+                    }}
+                    className="flex-1 py-4 bg-[#6750A4] text-white rounded-2xl font-bold hover:bg-[#4F378B] transition-all shadow-lg shadow-[#6750A4]/25"
+                  >
+                    Ya, Kirim
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <AnimatePresence>
           {showViolationWarning && (
             <motion.div 
@@ -1183,11 +1232,7 @@ export const ParticipantFlow: React.FC = () => {
               <div className="pt-6 pb-10 sm:pt-12 sm:pb-20 flex flex-col items-center gap-4">
                 <div className="w-full h-px bg-[#E6E1E5]" />
                 <button
-                  onClick={() => {
-                    if (window.confirm('Apakah Anda yakin ingin mengirim jawaban ini? Pastikan semua jawaban sudah benar, Anda tidak dapat mengubahnya setelah ini.')) {
-                      submitExam();
-                    }
-                  }}
+                  onClick={() => setShowSubmitConfirm(true)}
                   disabled={loading || Object.keys(answers).length < questions.length}
                   className="w-full max-w-md py-4 sm:py-6 rounded-[20px] sm:rounded-[24px] bg-[#6750A4] text-white font-bold text-lg sm:text-2xl shadow-xl hover:bg-[#4F378B] transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                 >
